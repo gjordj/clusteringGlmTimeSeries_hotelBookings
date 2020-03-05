@@ -1,0 +1,10 @@
+"0","```r
+
+as.table(as.matrix(roomChannel))
+```"
+"1","              A     B     C     D     E     F     G     H     L     P
+Corporate  2858     0    22   186   177     9    15     2     0     0
+Direct     3932     3   327  1326  1063   700   359   149     6     0
+TA/TO     16608     0   569  5921  3742   397  1236   450     0     2
+Undefined     1     0     0     0     0     0     0     0     0     0
+"

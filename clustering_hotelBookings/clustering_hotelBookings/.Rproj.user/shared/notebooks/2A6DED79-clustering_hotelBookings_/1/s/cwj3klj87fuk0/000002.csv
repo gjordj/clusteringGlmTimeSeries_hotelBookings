@@ -1,0 +1,5 @@
+"0","```r
+#Columns with all zeros from the sample
+predictiveVariablesNonZero = predictiveVariables_sample[!sapply(predictiveVariables_sample, function(x) sum(x)== 0)]
+predictiveVariablesNonZeroScaled = scale(predictiveVariablesNonZero)
+```"

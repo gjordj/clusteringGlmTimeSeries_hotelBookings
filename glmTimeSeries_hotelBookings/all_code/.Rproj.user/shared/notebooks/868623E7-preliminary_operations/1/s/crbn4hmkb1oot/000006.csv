@@ -1,0 +1,3 @@
+"0","temp_compare <- temp_compare[order(temp_compare$OR,decreasing = TRUE),]"
+"0","temp_compare <- temp_compare[!is.infinite(temp_compare$OR)]"
+"0","temp_compare <- temp_compare[!is.na(temp_compare$OR)]"

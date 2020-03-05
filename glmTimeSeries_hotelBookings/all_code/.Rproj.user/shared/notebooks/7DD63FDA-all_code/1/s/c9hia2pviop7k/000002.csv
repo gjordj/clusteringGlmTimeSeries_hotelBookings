@@ -1,0 +1,8 @@
+"0","library(""NbClust"")"
+"0","set.seed(123)"
+"0","raw_data_encoded_scaled = scale(raw_data_encoded[,-1])"
+"0","raw_data_groups = as.data.frame.matrix(raw_data_encoded_scaled)"
+"0","nb.todos = NbClust(raw_data_groups, distance = ""euclidean"", min.nc = 2, max.nc = 10, method = ""complete"", index =""all"")"
+"2","Error in NbClust(raw_data_groups, distance = ""euclidean"", min.nc = 2,  : 
+  The TSS matrix is indefinite. There must be too many missing values. The index cannot be calculated.
+"

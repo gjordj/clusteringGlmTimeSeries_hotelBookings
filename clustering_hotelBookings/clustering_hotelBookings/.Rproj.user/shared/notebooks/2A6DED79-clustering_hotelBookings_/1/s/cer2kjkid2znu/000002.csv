@@ -1,0 +1,4 @@
+"0","```r
+library(FactoMineR)
+roomChannel.ca=CA(roomChannel, graph = FALSE)
+```"

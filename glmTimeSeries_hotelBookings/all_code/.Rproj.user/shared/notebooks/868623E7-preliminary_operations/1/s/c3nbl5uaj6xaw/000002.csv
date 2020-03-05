@@ -1,0 +1,28 @@
+"0","fviz_nbclust(predictiveVariables_sampleScaled, cluster::clara, method = ""silhouette"") +ggtitle(""Número óptimo de clusters - CLARA"") +labs(x=""Número k de clusters"", y=""Anchura del perfil promedio"")"
+"2","Distance computations with NAs: using correct instead of pre-2016 wrong formula.
+Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
+to suppress this warning."
+"2","Distance computations with NAs: using correct instead of pre-2016 wrong formula.
+Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
+to suppress this warning."
+"2","Distance computations with NAs: using correct instead of pre-2016 wrong formula.
+Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
+to suppress this warning."
+"2","Distance computations with NAs: using correct instead of pre-2016 wrong formula.
+Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
+to suppress this warning."
+"2","Distance computations with NAs: using correct instead of pre-2016 wrong formula.
+Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
+to suppress this warning."
+"2","Distance computations with NAs: using correct instead of pre-2016 wrong formula.
+Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
+to suppress this warning."
+"2","Distance computations with NAs: using correct instead of pre-2016 wrong formula.
+Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
+to suppress this warning."
+"2","Distance computations with NAs: using correct instead of pre-2016 wrong formula.
+Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
+to suppress this warning."
+"2","Distance computations with NAs: using correct instead of pre-2016 wrong formula.
+Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
+to suppress this warning."

@@ -1,0 +1,4 @@
+"0","```r
+countryRoom = as.data.frame.matrix(table(raw_data$Country, raw_data$ReservedRoomType))
+countryRoom
+```"

@@ -1,0 +1,9 @@
+"0","```r
+ggplot(data = data.frame(t(cstats.table(gower_dist, aggl.clust.c, 15))), 
+       aes(x = cluster.number, y = avg.silwidth)) +
+  geom_point() +
+  geom_line() +
+  ggtitle(\"Optimal number of clusters - HCUT\") +
+  labs(x = \"Optimal k clusters\", y = \"Average Width Profile\") +
+  theme(plot.title = element_text(hjust = 0.5))
+```"

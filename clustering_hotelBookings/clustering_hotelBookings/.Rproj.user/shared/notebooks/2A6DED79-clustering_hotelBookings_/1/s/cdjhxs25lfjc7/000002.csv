@@ -1,0 +1,12 @@
+"0","```r
+pam_fit$clustering<- as.factor(pam_fit$clustering)
+tabl = prop.table(table(pam_fit$clustering,isCanceled_sample))*100
+tabl
+```"
+"1","   isCanceled_sample
+       0    1
+  1 33.2 11.6
+  2 15.2 11.4
+  3 18.5  5.0
+  4  4.5  0.6
+"

@@ -1,0 +1,4 @@
+"0","```r
+plot(aggl.clust.c, main = \"HCUT \")
+rect.hclust(aggl.clust.c, k = 2, border = 2:3)
+```"

@@ -1,0 +1,6 @@
+"0","```r
+raw_data_prediction <- raw_data_encoded[-3]
+
+# raw_data_prediction_sample <- raw_data_encoded_sample[-3]
+# raw_data_prediction_sample = raw_data_prediction_sample[!sapply(raw_data_prediction_sample, function(x) sum(x)== 0)]
+```"

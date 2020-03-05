@@ -1,0 +1,28 @@
+"0","```r
+tabl[1,2]/(tabl[1]+ tabl[1,2])*100 # % of Cancelations of Group 1
+```"
+"1","[1] 25.89286
+"
+"0","```r
+tabl[2,2]/(tabl[2]+tabl[2,2])*100 # % of Cancelations of Group 2
+```"
+"1","[1] 42.85714
+"
+"0","```r
+tabl[3,2]/(tabl[3]+tabl[3,2])*100 # % of Cancelations of Group 3
+```"
+"1","[1] 21.2766
+"
+"0","```r
+tabl[4,2]/(tabl[4]+tabl[4,2])*100 # % of Cancelations of Group 4
+```"
+"1","[1] 11.76471
+"
+"0","```r
+# tabl[5,2]/(tabl[5]+tabl[5,2])*100 # % of Cancelations of Group 5
+# tabl[6,2]/(tabl[6]+tabl[6,2])*100 # % of Cancelations of Group 6
+# tabl[7,2]/(tabl[7]+tabl[7,2])*100 # % of Cancelations of Group 7
+# tabl[8,2]/(tabl[8]+tabl[8,2])*100 # % of Cancelations of Group 8
+# tabl[9,2]/(tabl[9]+tabl[9,2])*100 # % of Cancelations of Group 9
+# tabl[10,2]/(tabl[10]+tabl[10,2])*100 # % of Cancelations of Group 10
+```"

@@ -1,0 +1,117 @@
+"0","```r
+##############
+#LIBRARIES####
+##############
+library(readr)
+library(skimr)# Beautiful Summarize
+```"
+"1","Registered S3 method overwritten by 'dplyr':
+  method           from
+  print.rowwise_df     
+
+Attaching package: ‘skimr’
+
+The following object is masked from ‘package:stats’:
+
+    filter
+"
+"0","```r
+library(cleandata)# ordinal encoding
+library(onehot)# nominal encoding
+```"
+"1","Loading required package: Matrix
+"
+"0","```r
+library(ggplot2)
+library(ggpubr)
+```"
+"1","Loading required package: magrittr
+"
+"0","```r
+library(easyGgplot2)
+library(forcats)
+
+library(PerformanceAnalytics) # Correlations
+```"
+"1","Loading required package: xts
+Loading required package: zoo
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+Registered S3 method overwritten by 'xts':
+  method     from
+  as.zoo.xts zoo 
+
+Attaching package: ‘PerformanceAnalytics’
+
+The following object is masked from ‘package:graphics’:
+
+    legend
+"
+"0","```r
+library(corrplot)
+```"
+"1","corrplot 0.84 loaded
+"
+"0","```r
+library(dplyr) # select
+```"
+"1","
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:xts’:
+
+    first, last
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+"
+"0","```r
+library(factoextra)
+```"
+"1","Welcome! Related Books: `Practical Guide To Cluster Analysis in R` at https://goo.gl/13EFCZ
+"
+"0","```r
+library(\"NbClust\")
+library(cluster)
+
+library(zoo)
+library(ggfortify)
+require(forecast)
+```"
+"1","Loading required package: forecast
+Registered S3 method overwritten by 'quantmod':
+  method            from
+  as.zoo.data.frame zoo 
+Registered S3 methods overwritten by 'forecast':
+  method                 from     
+  autoplot.Arima         ggfortify
+  autoplot.acf           ggfortify
+  autoplot.ar            ggfortify
+  autoplot.bats          ggfortify
+  autoplot.decomposed.ts ggfortify
+  autoplot.ets           ggfortify
+  autoplot.forecast      ggfortify
+  autoplot.stl           ggfortify
+  autoplot.ts            ggfortify
+  fitted.ar              ggfortify
+  fitted.fracdiff        fracdiff 
+  fortify.ts             ggfortify
+  residuals.ar           ggfortify
+  residuals.fracdiff     fracdiff 
+
+Attaching package: ‘forecast’
+
+The following object is masked from ‘package:ggpubr’:
+
+    gghistogram
+"

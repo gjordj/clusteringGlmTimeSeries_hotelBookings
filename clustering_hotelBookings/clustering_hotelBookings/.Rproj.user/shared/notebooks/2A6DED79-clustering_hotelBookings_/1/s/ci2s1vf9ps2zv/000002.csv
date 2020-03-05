@@ -1,0 +1,35 @@
+"0","```r
+raw_data_encoded = raw_data
+# ORDINAL ENCODING
+#ArrivalDateMonth
+levels <- c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December')
+raw_data_encoded$ArrivalDateMonth = factor(raw_data_encoded$ArrivalDateMonth, order = TRUE , levels)
+x <- as.data.frame(raw_data_encoded$ArrivalDateMonth)
+raw_data_encoded$ArrivalDateMonth <- encode_ordinal( x, levels, none='', out.int=FALSE,
+               full_print=TRUE)
+```"
+"1"," raw_data_encoded$ArrivalDateMonth
+ August : 4894                    
+ July   : 4573                    
+ April  : 3609                    
+ May    : 3559                    
+ October: 3555                    
+ March  : 3336                    
+ (Other):16534                    
+coded 1 cols 12 levels 
+ raw_data_encoded$ArrivalDateMonth
+ 8      : 4894                    
+ 7      : 4573                    
+ 4      : 3609                    
+ 5      : 3559                    
+ 10     : 3555                    
+ 3      : 3336                    
+ (Other):16534                    
+"
+"0","```r
+raw_data_encoded$ArrivalDateMonth <- as.numeric(unlist(raw_data_encoded$ArrivalDateMonth))
+
+print(dim(raw_data_encoded))
+```"
+"1","[1] 40060    31
+"

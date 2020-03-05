@@ -1,0 +1,6 @@
+"0","```r
+library(cluster)
+claraC2 = clara(numericVariables, 2,
+                    samples = 1000, correct.d = FALSE)
+fviz_cluster(claraC2, geom = \"point\", pointsize = 1, ellipse.type = \"norm\")
+```"

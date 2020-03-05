@@ -1,0 +1,7 @@
+"0","```r
+set.seed(123)
+grp <- cutree(aggl.clust.c, k = 2)
+fviz_cluster(list(data = predictiveVariables_sample, cluster = grp), stand = FALSE, geom = \"point\", pointsize = 1, title = \"Cluster Plot\")
+```"
+"1","argument title is deprecated; please use main instead.
+"

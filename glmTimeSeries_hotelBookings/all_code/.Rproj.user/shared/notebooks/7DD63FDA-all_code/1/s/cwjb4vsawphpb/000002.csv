@@ -1,0 +1,8 @@
+"0","#forecast model"
+"0","fArrival.ets=forecast(etsfitArrival, h = 20)"
+"0","fReservation.ets=forecast(etsfitReservation, h = 20)"
+"0","fCanceled.ets=forecast(etsfitArrivalCanceled, h = 20)"
+"0","fCheckout.ets=forecast(etsfitArrivalCheckout, h = 20)"
+"0",""
+"0","fCanceledReservation.ets=forecast(etsfitReservationCanceled, h = 20)"
+"0","fCheckoutReservation.ets=forecast(etsfitReservationCheckout, h = 20)"

@@ -1,0 +1,6 @@
+"0","set.seed(123)"
+"0","#Encoded data sample"
+"0","raw_data_encoded_sample = sample_n(raw_data_encoded, size = 1000)"
+"2","Error in sample_n(raw_data_encoded, size = 1000) : 
+  object 'raw_data_encoded' not found
+"

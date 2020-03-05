@@ -1,0 +1,71 @@
+"0","```r
+# NOMINAL ENCODING - ONEHOT ENCODING
+
+# https://github.com/Zelazny7/onehot
+# ReservedRoomType
+ReservedRoomType <- as.data.frame(raw_data_encoded$ReservedRoomType)
+encoder <- onehot(ReservedRoomType, max_levels = 15, add_NA_factors = FALSE)
+ReservedRoomType_onehot<- predict(encoder, ReservedRoomType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, ReservedRoomType_onehot)
+print(dim(raw_data_encoded))
+```"
+"1","[1] 40060    41
+"
+"0","```r
+# AssignedRoomType
+AssignedRoomType <- as.data.frame(raw_data_encoded$AssignedRoomType)
+encoder <- onehot(AssignedRoomType, max_levels = 15, add_NA_factors = FALSE)
+AssignedRoomType_onehot<- predict(encoder, AssignedRoomType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, AssignedRoomType_onehot)
+print(dim(raw_data_encoded))
+```"
+"1","[1] 40060    52
+"
+"0","```r
+# Meal
+Meal <- as.data.frame(raw_data_encoded$Meal)
+encoder <- onehot(Meal, max_levels = 15, add_NA_factors = FALSE)
+Meal_onehot<- predict(encoder, Meal, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, Meal_onehot)
+print(dim(raw_data_encoded))
+```"
+"1","[1] 40060    57
+"
+"0","```r
+# Country
+Country <- as.data.frame(raw_data_encoded$Country)
+encoder <- onehot(Country, max_levels = 130, add_NA_factors = FALSE)
+Country_onehot<- predict(encoder, Country, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, Country_onehot)
+print(dim(raw_data_encoded))
+```"
+"1","[1] 40060   183
+"
+"0","```r
+# MarketSegment
+MarketSegment <- as.data.frame(raw_data_encoded$MarketSegment)
+encoder <- onehot(MarketSegment, max_levels = 15, add_NA_factors = FALSE)
+MarketSegment_onehot<- predict(encoder, MarketSegment, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, MarketSegment_onehot)
+
+# DistributionChannel
+DistributionChannel <- as.data.frame(raw_data_encoded$DistributionChannel)
+encoder <- onehot(DistributionChannel, max_levels = 15, add_NA_factors = FALSE)
+DistributionChannel_onehot<- predict(encoder, DistributionChannel, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, DistributionChannel_onehot)
+
+
+# DepositType
+DepositType <- as.data.frame(raw_data_encoded$DepositType)
+encoder <- onehot(DepositType, max_levels = 15, add_NA_factors = FALSE)
+DepositType_onehot<- predict(encoder, DepositType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, DepositType_onehot)
+
+
+# CustomerType
+CustomerType <- as.data.frame(raw_data_encoded$CustomerType)
+encoder <- onehot(CustomerType, max_levels = 15, add_NA_factors = FALSE)
+CustomerType_onehot<- predict(encoder, CustomerType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, CustomerType_onehot)
+
+```"

@@ -1,0 +1,1 @@
+"0","clus.nb = NbClust(raw_data_groups, distance = ""euclidean"",min.nc = 2, max.nc = 10,method = ""complete"", index =""gap"")"

@@ -1,0 +1,19 @@
+"0","```r
+# Calculate silhouette width for many k using 
+sil_width <- c(NA)
+for(i in 2:10){
+ fanny_fit <- fanny(gower_dist,
+                 diss = TRUE,
+                 k = i)
+  sil_width[i] <- fanny_fit$silinfo$avg.width
+}
+```"
+"1","FANNY algorithm has not converged in 'maxit' = 500 iterationsFANNY algorithm has not converged in 'maxit' = 500 iterationsFANNY algorithm has not converged in 'maxit' = 500 iterationsFANNY algorithm has not converged in 'maxit' = 500 iterationsFANNY algorithm has not converged in 'maxit' = 500 iterationsFANNY algorithm has not converged in 'maxit' = 500 iterationsFANNY algorithm has not converged in 'maxit' = 500 iterations
+"
+"0","```r
+# Plot sihouette width (higher is better)
+plot(1:10, sil_width,
+     xlab = \"Number of clusters\",
+     ylab = \"Silhouette Width\")
+lines(1:10, sil_width)
+```"

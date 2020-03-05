@@ -1,0 +1,15 @@
+"0","```r
+timeSeriesDataSet = raw_data_encoded
+# ERASE ENCODED VARIABLES
+erase_columns <- c(12, 13, 14, 15, 19, 20, 22, 26)
+erase_columns # number of the position of the columns to erase
+```"
+"1","[1] 12 13 14 15 19 20 22 26
+"
+"0","```r
+raw_data_encoded <- raw_data_encoded[ -erase_columns ]
+
+# COMMON SENSE DELETION: Based on how we define the Target Variable
+# ReservationStatus and Date
+raw_data_encoded <- raw_data_encoded[ -c(22,23) ]
+```"

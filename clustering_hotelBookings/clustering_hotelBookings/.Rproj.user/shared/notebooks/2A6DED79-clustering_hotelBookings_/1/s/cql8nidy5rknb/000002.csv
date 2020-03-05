@@ -1,0 +1,5 @@
+"0","```r
+fviz_ca_biplot(roomChannel.ca, map =\"rowgreen\",
+               arrow = c(FALSE, TRUE))+
+        ggtitle(\"Contribution of Room Types to the dimensions\")
+```"

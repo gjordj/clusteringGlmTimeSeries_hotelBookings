@@ -1,0 +1,4 @@
+"0","plot(aggl.clust.c, main = ""HCUT "")"
+"2","Error in plot(aggl.clust.c, main = ""HCUT "") : 
+  object 'aggl.clust.c' not found
+"

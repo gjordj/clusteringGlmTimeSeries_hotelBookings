@@ -1,0 +1,5 @@
+"0","```r
+#Scaled sample
+predictiveVariables_sampleScaled = scale(predictiveVariables_sample)
+predictiveVariables_sampleScaled = as.data.frame(predictiveVariables_sampleScaled)
+```"

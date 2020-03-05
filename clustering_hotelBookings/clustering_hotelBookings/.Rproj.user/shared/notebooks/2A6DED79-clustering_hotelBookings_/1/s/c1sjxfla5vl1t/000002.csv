@@ -1,0 +1,4 @@
+"0","```r
+roomChannelt = as.table(as.matrix(roomChannel))
+roomChannelt
+```"

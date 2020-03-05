@@ -1,0 +1,5 @@
+"0","```r
+library(\"FactoMineR\")
+# tab1 <- as.data.frame.matrix(table(as.factor(df$X1),as.factor(df$X2)))
+# res.ca <- CA(tab1, graph = FALSE)
+```"

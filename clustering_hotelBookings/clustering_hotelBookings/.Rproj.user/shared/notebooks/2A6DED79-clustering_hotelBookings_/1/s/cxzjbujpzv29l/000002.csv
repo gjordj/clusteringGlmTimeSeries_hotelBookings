@@ -1,0 +1,5 @@
+"0","```r
+fviz_ca_biplot(countryRoom.ca, map =\"colgreen\",
+               arrow = c(TRUE, FALSE))+
+        ggtitle(\"Contribution of Country to the dimensions\")
+```"

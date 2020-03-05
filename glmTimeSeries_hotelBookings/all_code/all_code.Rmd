@@ -1,0 +1,2527 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# AUTHOR: JORDI TARROCH MEJÓN
+
+El archivo H1 consta de 40.060 observaciones efectuadas sobre 31 variables en un hotel de
+vacaciones (resort), tal y como se describe en Antonio, Almeida y Nunes (2019). Su trabajo de
+cara a la evaluación de la asignatura consistirá en elaborar tres documentos con las
+características siguientes.
+
+El primero, común a esta asignatura y a la del Prof. López Zafra, consistirá en:
+- Describir las operaciones de limpieza y transformación de los datos de cara a la consolidación de los mismos para su posterior aplicación a cada uno de los trabajos específicos que deberá realizar en cada asignatura.
+
+Este documento, “Operaciones preliminares”, tendrá la estructura de un paper:
+- título (el señalado)
+- abstract
+- introducción y objetivos del trabajo a realizar
+- operaciones comunes para las dos asignaturas: EDA
+- operaciones específicas correspondientes a Agrupación
+- operaciones específicas correspondientes a Predicción
+- conclusiones
+- referencias bibliográficas.
+
+ORIENTACIÓN en la estructura de Antonio, Almeida y Nunes (2019). No debe
+reproducir ninguna información que se encuentre en el citado paper, como, por ejemplo, la
+descripción del archivo y las variables. La extensión máxima de este documento será de 10 pp.
+
+# LIBRARIES
+```{r}
+##############
+#LIBRARIES####
+##############
+library(readr)
+library(skimr)# Beautiful Summarize
+library(cleandata)# ordinal encoding
+library(onehot)# nominal encoding
+
+library(ggplot2)
+library(ggpubr)
+library(easyGgplot2)
+library(forcats)
+
+library(PerformanceAnalytics) # Correlations
+library(corrplot)
+library(dplyr) # select
+
+library(factoextra)
+library("NbClust")
+library(cluster)
+
+library(zoo)
+library(ggfortify)
+require(forecast)
+```
+
+```{r}
+raw_data<-read_csv("H1.csv")
+```
+# TARGET VARIABLE
+- IsCanceled
+- ReservationStatus is almost the same as IsCanceled:
+  - No-Show is a type of Canceled booking.
+```{r}
+unique(raw_data$IsCanceled[raw_data$ReservationStatus == 'Check-Out'])
+unique(raw_data$IsCanceled[raw_data$ReservationStatus == 'No-Show'])
+unique(raw_data$IsCanceled[raw_data$ReservationStatus == 'Canceled'])
+```
+
+# DATA WRANGLING
+
+
+## ENCODING CATEGORICAL VARIABLES
+
+### ORDINAL ENCODING
+- ArrivalDateMonth
+
+```{r}
+raw_data_encoded = raw_data
+# ORDINAL ENCODING
+#ArrivalDateMonth
+levels <- c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December')
+raw_data_encoded$ArrivalDateMonth = factor(raw_data_encoded$ArrivalDateMonth, order = TRUE , levels)
+x <- as.data.frame(raw_data_encoded$ArrivalDateMonth)
+raw_data_encoded$ArrivalDateMonth <- encode_ordinal( x, levels, none='', out.int=FALSE,
+               full_print=TRUE)
+raw_data_encoded$ArrivalDateMonth <- as.numeric(unlist(raw_data_encoded$ArrivalDateMonth))
+
+print(dim(raw_data_encoded))
+```
+
+###  NOMINAL ENCODING - ONEHOT ENCODING
+- ReservedRoomType
+- AssignedRoomType
+- Meal
+- Country
+- MarketSegment
+- DistributionChannel
+- DepositType
+- CustomerType
+
+
+```{r}
+# NOMINAL ENCODING - ONEHOT ENCODING
+
+# https://github.com/Zelazny7/onehot
+# ReservedRoomType
+ReservedRoomType <- as.data.frame(raw_data_encoded$ReservedRoomType)
+encoder <- onehot(ReservedRoomType, max_levels = 15, add_NA_factors = FALSE)
+ReservedRoomType_onehot<- predict(encoder, ReservedRoomType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, ReservedRoomType_onehot)
+print(dim(raw_data_encoded))
+
+# AssignedRoomType
+AssignedRoomType <- as.data.frame(raw_data_encoded$AssignedRoomType)
+encoder <- onehot(AssignedRoomType, max_levels = 15, add_NA_factors = FALSE)
+AssignedRoomType_onehot<- predict(encoder, AssignedRoomType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, AssignedRoomType_onehot)
+print(dim(raw_data_encoded))
+
+# Meal
+Meal <- as.data.frame(raw_data_encoded$Meal)
+encoder <- onehot(Meal, max_levels = 15, add_NA_factors = FALSE)
+Meal_onehot<- predict(encoder, Meal, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, Meal_onehot)
+print(dim(raw_data_encoded))
+
+# Country
+Country <- as.data.frame(raw_data_encoded$Country)
+encoder <- onehot(Country, max_levels = 130, add_NA_factors = FALSE)
+Country_onehot<- predict(encoder, Country, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, Country_onehot)
+print(dim(raw_data_encoded))
+
+# MarketSegment
+MarketSegment <- as.data.frame(raw_data_encoded$MarketSegment)
+encoder <- onehot(MarketSegment, max_levels = 15, add_NA_factors = FALSE)
+MarketSegment_onehot<- predict(encoder, MarketSegment, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, MarketSegment_onehot)
+
+# DistributionChannel
+DistributionChannel <- as.data.frame(raw_data_encoded$DistributionChannel)
+encoder <- onehot(DistributionChannel, max_levels = 15, add_NA_factors = FALSE)
+DistributionChannel_onehot<- predict(encoder, DistributionChannel, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, DistributionChannel_onehot)
+
+
+# DepositType
+DepositType <- as.data.frame(raw_data_encoded$DepositType)
+encoder <- onehot(DepositType, max_levels = 15, add_NA_factors = FALSE)
+DepositType_onehot<- predict(encoder, DepositType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, DepositType_onehot)
+
+
+# CustomerType
+CustomerType <- as.data.frame(raw_data_encoded$CustomerType)
+encoder <- onehot(CustomerType, max_levels = 15, add_NA_factors = FALSE)
+CustomerType_onehot<- predict(encoder, CustomerType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, CustomerType_onehot)
+
+```
+
+### NULL to NUMERIC 
+- Agent
+- Company
+
+```{r}
+# Agent
+raw_data_encoded$Agent <- ifelse(raw_data_encoded$Agent == "NULL", 0,raw_data_encoded$Agent)
+raw_data_encoded$Agent <- as.numeric(raw_data_encoded$Agent)
+# Company
+raw_data_encoded$Company <- ifelse(raw_data_encoded$Company == "NULL", 0,raw_data_encoded$Company)
+raw_data_encoded$Company <- as.numeric(raw_data_encoded$Company)
+```
+
+#### AGENT YES
+```{r}
+raw_data_encoded$AgentYes <- ifelse(raw_data_encoded$Agent == 0, 0, 1)
+```
+
+#### COMPANY YES
+```{r}
+raw_data_encoded$CompanyYes <- ifelse(raw_data_encoded$Company == 0, 0, 1)
+```
+
+## PRE-ENCODED AND COMMON SENSE COLUMNS DELETION
+```{r}
+timeSeriesDataSet = raw_data_encoded
+# ERASE ENCODED VARIABLES
+erase_columns <- c(12, 13, 14, 15, 19, 20, 22, 26)
+erase_columns # number of the position of the columns to erase
+raw_data_encoded <- raw_data_encoded[ -erase_columns ]
+
+# COMMON SENSE DELETION: Based on how we define the Target Variable
+# ReservationStatus and Date
+raw_data_encoded <- raw_data_encoded[ -c(22,23) ]
+```
+
+
+## SAMPLING
+```{r}
+set.seed(123)
+#Encoded data sample
+raw_data_encoded_sample = sample_n(raw_data_encoded, size = 1000)
+```
+
+
+### TARGET VARIABLE
+```{r}
+#isCanceled
+isCanceled_sample = raw_data_encoded_sample[,1]
+```
+```{r}
+target <- as.data.frame(raw_data_encoded_sample %>%group_by(IsCanceled)%>%summarise(counts = n()))%>%mutate(perc = counts/nrow(raw_data_encoded_sample))
+
+ggplot(target, aes(x = IsCanceled, y = perc)) + geom_bar(stat = "identity")+
+  geom_text(aes(label = round(perc,2)))
+```
+### PREDICTIVE VARIABLES
+```{r}
+#Predictive Variables: all of them except:
+  # - IsCanceled (Target Variable) and ArrivalDateYear.
+# We erase ArrivalDateYear because we won't our models to be time replicable.
+predictiveVariables_sample = raw_data_encoded_sample[,c(-1,-3)]
+```
+
+## PREDICTION DATASET
+```{r}
+raw_data_prediction <- raw_data_encoded[-3]
+
+raw_data_prediction_sample <- raw_data_encoded_sample[-3]
+raw_data_prediction_sample = raw_data_prediction_sample[!sapply(raw_data_prediction_sample, function(x) sum(x)== 0)]
+```
+
+
+
+
+# EDA
+## Target Variable %x
+```{r}
+target <- as.data.frame(raw_data %>%group_by(IsCanceled)%>%summarise(counts = n()))%>%mutate(perc = counts/nrow(raw_data))
+
+ggplot(target, aes(x = IsCanceled, y = perc)) + geom_bar(stat = "identity")+
+  geom_text(aes(label = round(perc,2)))
+```
+
+
+
+## Relationships
+  General Histogram
+  Histogram based on type 0-1
+  Boxplot
+
+
+```{r}
+#Plot function
+eda_plot <- function(df_function, character, column){
+  df_function <- df_function[,c(1,column)]
+  colnames(df_function) <- c("IsCanceled", "Variable" )
+  #############
+  # HISTOGRAMS#
+  #############
+  bxp <- ggplot(df_function) +
+    geom_density(aes(x = Variable, fill = IsCanceled), alpha = 0.2)+
+    xlab(character)
+
+  dp <- ggplot2.histogram(data=df_function, xName= 'Variable', addMeanLine=TRUE, meanLineColor="green",
+                    meanLineType="dashed", meanLineSize=1,
+                    addDensityCurve=TRUE, densityFill='blue', fill = 'blue')+ xlab(character)
+
+  ##################################
+  # RELATIONSHIPS BETWEEN VARIABLES########################################
+  ##################################
+ bp <- df_function %>%
+   mutate(class = fct_reorder(IsCanceled,Variable, .fun='length' )) %>%
+   ggplot( aes(x=IsCanceled, y= Variable, fill=class)) +
+     geom_boxplot() +
+     xlab("IsCanceled") +
+     ylab(character)+
+     theme(legend.position="none") +
+     xlab("") +
+     xlab("")
+
+  ggarrange(bxp, dp, bp ,
+          labels = c("A", "B", "C"),
+          ncol = 2, nrow = 2)
+
+}
+
+raw_data$IsCanceled <- factor(raw_data$IsCanceled)
+```
+
+```{r}
+#Plot function
+eda_plot_categorical <- function(df_function, character, column){
+  df_function <- df_function[,c(1,column)]
+  colnames(df_function) <- c("IsCanceled", "Variable" )
+  #############
+  # HISTOGRAMS#
+  #############
+  bxp <- ggplot(df_function) +
+    geom_density(aes(x = Variable, fill = IsCanceled), alpha = 0.2)+
+    xlab(character)
+
+  dp <- ggplot2.histogram(data=df_function, xName= 'Variable', addMeanLine=TRUE, meanLineColor="green",
+                    meanLineType="dashed", meanLineSize=1,
+                    addDensityCurve=TRUE, densityFill='blue', fill = 'blue')+ xlab(character)
+
+
+
+ggarrange(bxp, dp,
+          labels = c("A", "B"),
+          ncol = 2)
+}
+```
+
+```{r}
+#Plot function
+eda_plot_categorical <- function(df_function, character, column){
+  df_function <- df_function[,c(1,column)]
+  colnames(df_function) <- c("IsCanceled", "Variable" )
+  #############
+  # HISTOGRAMS#
+  #############
+  bxp <- ggplot(df_function) +
+    geom_density(aes(x = Variable, fill = IsCanceled), alpha = 0.2)+
+    xlab(character)
+  bxp
+}
+```
+
+```{r}
+eda_plot(raw_data, "LeadTime", column = 2)
+```
+```{r}
+eda_plot(raw_data, "ArrivalDateYear", column = 3)
+```
+
+
+```{r}
+eda_plot_categorical(raw_data, "ArrivalDateMonth", column = 4)
+```
+
+```{r}
+eda_plot(raw_data, "ArrivalDateWeekNumber", column = 5)
+```
+```{r}
+eda_plot(raw_data, "ArrivalDateDayOfMonth", column = 6)
+```
+
+```{r}
+eda_plot(raw_data, "StaysInWeekendNights", column = 7)
+```
+
+```{r}
+eda_plot(raw_data, "StaysInWeekNights", column = 8)
+```
+
+```{r}
+eda_plot(raw_data, "Adults", column = 9)
+```
+```{r}
+eda_plot(raw_data, "Children", column = 10)
+```
+```{r}
+eda_plot(raw_data, "Babies", column = 11)
+```
+```{r}
+eda_plot_categorical(raw_data, "Meal", column = 12)
+```
+```{r}
+eda_plot_categorical(raw_data, "Country", column = 13)
+```
+```{r}
+eda_plot_categorical(raw_data, "MarketSegment", column = 14)
+```
+```{r}
+eda_plot_categorical(raw_data, "DistributionChannel", column = 15)
+```
+```{r}
+eda_plot(raw_data, "IsRepeatedGuest", column = 16)
+```
+```{r}
+eda_plot(raw_data, "PreviousCancellations", column = 17)
+```
+```{r}
+eda_plot(raw_data, "PreviousBookingsNotCanceled", column = 18)
+```
+```{r}
+eda_plot_categorical(raw_data, "ReservedRoomType", column = 19)
+```
+```{r}
+eda_plot_categorical(raw_data, "AssignedRoomType", column = 20)
+```
+```{r}
+eda_plot(raw_data, "BookingChanges", column = 21)
+```
+```{r}
+eda_plot_categorical(raw_data, "DepositType", column = 22)
+```
+```{r}
+
+eda_plot_categorical(raw_data, "Agent", column = 23)
+```
+```{r}
+eda_plot_categorical(raw_data, "Company", column = 24)
+```
+```{r}
+eda_plot_categorical(raw_data, "DaysInWaitingList", column = 25)
+```
+
+```{r}
+eda_plot_categorical(raw_data, "CustomerType", column = 26)
+```
+
+```{r}
+eda_plot(raw_data, "ADR", column = 27)
+```
+```{r}
+eda_plot(raw_data, "RequiredCarParkingSpaces", column = 28)
+```
+```{r}
+eda_plot(raw_data, "TotalOfSpecialRequests", column = 29)
+```
+```{r}
+eda_plot_categorical(raw_data, "ReservationStatus", column = 30)
+```
+
+```{r}
+raw_data_encoded$IsCanceled <- factor(raw_data_encoded$IsCanceled)
+eda_plot_categorical(raw_data_encoded, "AgentYes", column = 191)
+```
+
+```{r}
+eda_plot_categorical(raw_data_encoded, "CompanyYes", column = 192)
+```
+## Matrix Correlation
+- Numeric and Ordinal Encoded Variables (from column 2 to 21)
+
+
+```{r}
+
+corrplot(cor(raw_data_encoded[,2:21],
+             use = "complete.obs"),
+         method = "circle",
+         type = 'upper',
+         order = "hclust",
+         addrect = 2,
+         tl.cex = 0.4)
+```
+
+### Specific to Prediction
+#### Scatter Plots - Linear - Non Linear relationship
+```{r}
+chart.Correlation(predictiveVariables_sample[,1:19],
+                  histogram = TRUE, pch = 19)
+```
+#### Correlation Matrix with IsCanceled
+```{r}
+highcorrelation <- raw_data_encoded
+highcorrelation$IsCanceled <- as.numeric(highcorrelation$IsCanceled)
+
+corrplot(cor(highcorrelation[,1:21],
+             use = "complete.obs"),
+         method = "circle",
+         type = 'upper',
+         order = "hclust",
+         addrect = 2,
+         tl.cex = 0.4)
+```
+#### Highest Linear Correlation with IsCanceled
+```{r}
+#Check initial correlation between variables and IsCanceled based on a coefficient.
+
+newData.cor = cor(highcorrelation[,1:21],
+             use = "complete.obs")
+corrplot(newData.cor)
+corrplot(newData.cor, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45)
+
+
+
+newData.cor <- data.frame(newData.cor)
+correlated <- c()
+variable <- c()
+coefficient_limit  <- c()
+select_columns <-  c()
+coeff <-  0.1
+
+
+for(column in 1:dim(newData.cor)[1]){
+  if(abs(newData.cor[1,column]) > coeff){
+    variable <-  append(variable, names(newData.cor)[column])
+    correlated  <-  append(correlated, newData.cor[1,column] )
+    coefficient_limit <- append(coefficient_limit,coeff)
+  }
+}
+correlated_variables <-  data.frame(variable,correlated, coefficient_limit)
+# correlated_variables <-  data.frame(variable,correlated)
+
+print(correlated_variables)
+```
+
+#### Contingency Table of Categorical Variables
+```{r}
+#############################################
+# CONTINGENCY TABLE OF CATEGORICAL VARIABLES#
+#############################################
+
+# IsCanceled VS ArrivalDateMonth#
+#################################
+## two-way contingency table of categorical outcome and predictors
+
+contingency_table <- xtabs(~IsCanceled+ArrivalDateMonth, data = raw_data)
+contingency_table_percentage <- c()
+ArrivalDateMonth <- 0
+for( ArrivalDateMonth in 1:dim(contingency_table)[2]){
+  contingency_table_percentage[ArrivalDateMonth] = contingency_table[2, ArrivalDateMonth]/contingency_table[1, ArrivalDateMonth]*100
+}
+
+barplot(contingency_table_percentage,
+        main = "IsCanceled % vs ArrivalDateMonth",
+        xlab = "ArrivalDateMonth",
+        ylab = "IsCanceled %",
+        names.arg = c("April", "August","December","February","January", "July","June", "March", "May", "November",  "October", "September"),
+        col = "darkred",
+        horiz = FALSE)
+
+default_total <- sum(contingency_table[2,])
+```
+
+```{r}
+# IsCanceled VS Meal#
+#################################
+## two-way contingency table of categorical outcome and predictors
+
+contingency_table <- xtabs(~IsCanceled+Meal, data = raw_data)
+contingency_table_percentage <- c()
+Meal <- 0
+for( Meal in 1:dim(contingency_table)[2]){
+  contingency_table_percentage[Meal] = contingency_table[2, Meal]/contingency_table[1, Meal]*100
+}
+
+barplot(contingency_table_percentage,
+        main = "IsCanceled % vs Meal",
+        xlab = "Meal",
+        ylab = "IsCanceled %",
+        names.arg = c("BB", "FB", "HB", "SC", "Undefined"),
+        col = "darkred",
+        horiz = FALSE)
+
+default_total <- sum(contingency_table[2,])
+
+```
+
+```{r}
+# IsCanceled VS MarketSegment#
+#################################
+## two-way contingency table of categorical outcome and predictors
+
+contingency_table <- xtabs(~IsCanceled+MarketSegment, data = raw_data)
+contingency_table_percentage <- c()
+MarketSegment <- 0
+for( MarketSegment in 1:dim(contingency_table)[2]){
+  contingency_table_percentage[MarketSegment] = contingency_table[2, MarketSegment]/contingency_table[1, MarketSegment]*100
+}
+
+barplot(contingency_table_percentage,
+        main = "IsCanceled % vs MarketSegment",
+        xlab = "MarketSegment",
+        ylab = "IsCanceled %",
+        names.arg = c("Complementary", "Corporate","Direct","Groups", "Offline TA/TO", "Online TA"),
+        col = "darkred",
+        horiz = FALSE)
+
+default_total <- sum(contingency_table[2,])
+```
+```{r}
+# IsCanceled VS DistributionChannel#
+#################################
+## two-way contingency table of categorical outcome and predictors
+
+contingency_table <- xtabs(~IsCanceled+DistributionChannel, data = raw_data)
+contingency_table_percentage <- c()
+DistributionChannel <- 0
+for( DistributionChannel in 1:dim(contingency_table)[2]){
+  contingency_table_percentage[DistributionChannel] = contingency_table[2, DistributionChannel]/contingency_table[1, DistributionChannel]*100
+}
+
+barplot(contingency_table_percentage,
+        main = "IsCanceled % vs DistributionChannel",
+        xlab = "DistributionChannel",
+        ylab = "IsCanceled %",
+        names.arg = c("Corporate", "Direct", "TA/TO", "Undefined"),
+        col = "darkred",
+        horiz = FALSE)
+
+default_total <- sum(contingency_table[2,])
+```
+```{r}
+# IsCanceled VS ReservedRoomType#
+#################################
+## two-way contingency table of categorical outcome and predictors
+
+contingency_table <- xtabs(~IsCanceled+ReservedRoomType, data = raw_data)
+contingency_table_percentage <- c()
+ReservedRoomType <- 0
+for( ReservedRoomType in 1:dim(contingency_table)[2]){
+  contingency_table_percentage[ReservedRoomType] = contingency_table[2, ReservedRoomType]/contingency_table[1, ReservedRoomType]*100
+}
+contingency_table
+
+barplot(contingency_table_percentage[-10],
+        main = "IsCanceled % vs ReservedRoomType",
+        xlab = "ReservedRoomType",
+        ylab = "IsCanceled %",
+        names.arg = c("A", "B", "C", "D","E","F","G","H","L"),
+        col = "darkred",
+        horiz = FALSE)
+default_total <- sum(contingency_table[2,])
+```
+
+```{r}
+# IsCanceled VS AssignedRoomType#
+#################################
+## two-way contingency table of categorical outcome and predictors
+
+contingency_table <- xtabs(~IsCanceled+AssignedRoomType, data = raw_data)
+contingency_table_percentage <- c()
+AssignedRoomType <- 0
+for( AssignedRoomType in 1:dim(contingency_table)[2]){
+  contingency_table_percentage[AssignedRoomType] = contingency_table[2, AssignedRoomType]/contingency_table[1, AssignedRoomType]*100
+}
+
+barplot(contingency_table_percentage[-c(10,11)],
+        main = "IsCanceled % vs AssignedRoomType",
+        xlab = "AssignedRoomType",
+        ylab = "IsCanceled %",
+        names.arg = c("A", "B", "C", "D","E","F","G","H","I"),
+        col = "darkred",
+        horiz = FALSE)
+default_total <- sum(contingency_table[2,])
+```
+```{r}
+# IsCanceled VS DepositType#
+#################################
+## two-way contingency table of categorical outcome and predictors
+
+contingency_table <- xtabs(~IsCanceled+DepositType, data = raw_data)
+contingency_table_percentage <- c()
+DepositType <- 0
+for( DepositType in 1:dim(contingency_table)[2]){
+  contingency_table_percentage[DepositType] = contingency_table[2, DepositType]/contingency_table[1, DepositType]*100
+}
+
+barplot(contingency_table_percentage,
+        main = "IsCanceled % vs DepositType",
+        xlab = "DepositType",
+        ylab = "IsCanceled %",
+        names.arg = c("No Deposit", "Non Refund", "Refundable"),
+        col = "darkred",
+        horiz = FALSE)
+default_total <- sum(contingency_table[2,])
+```
+
+```{r}
+# IsCanceled VS CustomerType#
+#################################
+## two-way contingency table of categorical outcome and predictors
+
+contingency_table <- xtabs(~IsCanceled+CustomerType, data = raw_data)
+contingency_table_percentage <- c()
+CustomerType <- 0
+for( CustomerType in 1:dim(contingency_table)[2]){
+  contingency_table_percentage[CustomerType] = contingency_table[2, CustomerType]/contingency_table[1, CustomerType]*100
+}
+
+barplot(contingency_table_percentage,
+        main = "IsCanceled % vs CustomerType",
+        xlab = "CustomerType",
+        ylab = "IsCanceled %",
+        names.arg = c("Contract", "Group", "Transient", "Transient-Party"),
+        col = "darkred",
+        horiz = FALSE)
+default_total <- sum(contingency_table[2,])
+```
+```{r}
+# IsCanceled VS CompanyYes#
+#################################
+## two-way contingency table of categorical outcome and predictors
+
+contingency_table <- xtabs(~IsCanceled+CompanyYes, data = raw_data_encoded)
+contingency_table_percentage <- c()
+CompanyYes <- 0
+for( CompanyYes in 1:dim(contingency_table)[2]){
+  contingency_table_percentage[CompanyYes] = contingency_table[2, CompanyYes]/contingency_table[1, CompanyYes]*100
+}
+
+barplot(contingency_table_percentage,
+        main = "IsCanceled % vs CompanyYes",
+        xlab = "CompanyYes",
+        ylab = "IsCanceled %",
+        names.arg = c(0, 1),
+        col = "darkred",
+        horiz = FALSE)
+default_total <- sum(contingency_table[2,])
+```
+```{r}
+# IsCanceled VS AgentYes#
+#################################
+## two-way contingency table of categorical outcome and predictors
+
+contingency_table <- xtabs(~IsCanceled+AgentYes, data = raw_data_encoded)
+contingency_table_percentage <- c()
+AgentYes <- 0
+for( AgentYes in 1:dim(contingency_table)[2]){
+  contingency_table_percentage[AgentYes] = contingency_table[2, AgentYes]/contingency_table[1, AgentYes]*100
+}
+
+barplot(contingency_table_percentage,
+        main = "IsCanceled % vs AgentYes",
+        xlab = "AgentYes",
+        ylab = "IsCanceled %",
+        names.arg = c(0, 1),
+        col = "darkred",
+        horiz = FALSE)
+default_total <- sum(contingency_table[2,])
+```
+# CLUSTERING
+Clustering:
+- Goodness of the cluster Analysis
+- Optimal Number of Clusters
+ Clustering
+
+
+## DATA PRE-PROCESSING
+### SCALING
+```{r}
+#Scaled sample
+predictiveVariables_sampleScaled = scale(predictiveVariables_sample)
+predictiveVariables_sampleScaled = as.data.frame(predictiveVariables_sampleScaled)
+```
+
+### VARIABLES WITH ZERO VALUES IN ALL COLUMNS
+```{r}
+#Columns with all zeros from the sample
+predictiveVariablesNonZero = predictiveVariables_sample[!sapply(predictiveVariables_sample, function(x) sum(x)== 0)]
+predictiveVariablesNonZeroScaled = scale(predictiveVariablesNonZero)
+```
+
+### GOWER
+```{r}
+library(cluster)
+gower_dist = daisy(as.matrix(predictiveVariables_sample) , metric = "euclidean", stand = FALSE)
+
+```
+
+
+## GOODNESS OF THE CLUSTER ANALYSIS
+```{r}
+bondad_ac = get_clust_tendency(predictiveVariables_sample, 500)
+bondad_ac$hopkins_stat
+```
+
+## OPTIMAL NUMBER OF CLUSTERS
+
+### NUMBER FOR NON HIERARCHICAL CLUSTERING
+
+#### GENERAL FOR ALL OF THEM
+```{r}
+clus.nb = NbClust(predictiveVariablesNonZeroScaled, distance = "euclidean",min.nc = 2, max.nc = 10,method = "complete", index ="gap")
+
+clus.nb$Best.nc
+```
+
+
+#### PAM
+
+```{r}
+# Calculate silhouette width for many k using PAM
+sil_width <- c(NA)
+for(i in 2:10){
+  pam_fit <- pam(gower_dist,
+                 diss = TRUE,
+                 k = i)
+  sil_width[i] <- pam_fit$silinfo$avg.width
+}
+# Plot sihouette width (higher is better)
+plot(1:10, sil_width,
+     xlab = "Optimal k clusters",
+     ylab = "Average Width Profile")
+lines(1:10, sil_width)
+```
+
+
+#### CLARA
+
+
+```{r}
+# Only numeric Variables for clustering
+numericVariables <- predictiveVariablesNonZero[c(17,7,2,3,9,13,8,16,1,12,11,18,5,6,19)]
+```
+
+```{r}
+fviz_nbclust(numericVariables, cluster::clara, method = "silhouette") + ggtitle("Optimal number of clusters - CLARA") + labs(x = "Optimal k clusters", y = "Average Width Profile")
+# 2 groups
+```
+The optimal number of clusters will be given by the value of k that maximizes the average profile. In this case: 2
+
+
+#### FUZZY ANALYSIS CLUSTERING
+
+
+```{r}
+# Calculate silhouette width for many k using 
+sil_width <- c(NA)
+for(i in 2:10){
+ fanny_fit <- fanny(gower_dist,
+                 diss = TRUE,
+                 k = i)
+  sil_width[i] <- fanny_fit$silinfo$avg.width
+}
+# Plot sihouette width (higher is better)
+plot(1:10, sil_width,
+     xlab = "Number of clusters",
+     ylab = "Silhouette Width")
+lines(1:10, sil_width)
+```
+
+### NUMBER FOR HIERARCHICAL CLUSTERING
+
+#### HCUT
+```{r}
+aggl.clust.c <- hclust(gower_dist, method = "complete") 
+
+
+library(fpc)
+cstats.table <- function(dist, tree, k) {
+  clust.assess <- c("cluster.number","n","within.cluster.ss","average.within","average.between","wb.ratio","dunn2","avg.silwidth")
+  clust.size <- c("cluster.size")
+  stats.names <- c()
+  row.clust <- c()
+  output.stats <- matrix(ncol = k, nrow = length(clust.assess))
+  cluster.sizes <- matrix(ncol = k, nrow = k)
+  for (i in c(1:k)) {
+    row.clust[i] <- paste("Cluster-", i, " size")
+  }
+  for (i in c(2:k)) {
+    stats.names[i] <- paste("Test", i - 1)
+    
+    for (j in seq_along(clust.assess)) {
+      output.stats[j, i] <- unlist(cluster.stats(d = dist, clustering = cutree(tree, k = i))[clust.assess])[j]
+      
+    }
+    
+    for (d in 1:k) {
+      cluster.sizes[d, i] <- unlist(cluster.stats(d = dist, clustering = cutree(tree, k = i))[clust.size])[d]
+      dim(cluster.sizes[d, i]) <- c(length(cluster.sizes[i]), 1)
+      cluster.sizes[d, i]
+      
+    }
+  }
+  output.stats.df <- data.frame(output.stats)
+  cluster.sizes <- data.frame(cluster.sizes)
+  cluster.sizes[is.na(cluster.sizes)] <- 0
+  rows.all <- c(clust.assess, row.clust)
+  
+  # rownames(output.stats.df) <- clust.assess
+  output <- rbind(output.stats.df, cluster.sizes)[ ,-1]
+  colnames(output) <- stats.names[2:k]
+  rownames(output) <- rows.all
+  is.num <- sapply(output, is.numeric)
+  output[is.num] <- lapply(output[is.num], round, 2)
+  output
+}
+```
+
+```{r}
+ggplot(data = data.frame(t(cstats.table(gower_dist, aggl.clust.c, 15))), 
+       aes(x = cluster.number, y = avg.silwidth)) +
+  geom_point() +
+  geom_line() +
+  ggtitle("Optimal number of clusters - HCUT") +
+  labs(x = "Optimal k clusters", y = "Average Width Profile") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+## HIERARCHICAL CLUSTERING
+
+###  DENDROGRAM
+
+```{r}
+plot(aggl.clust.c, main = "HCUT ")
+rect.hclust(aggl.clust.c, k = 2, border = 2:3)
+```
+
+### CLUSTER PLOT
+```{r}
+set.seed(123)
+grp <- cutree(aggl.clust.c, k = 2)
+fviz_cluster(list(data = predictiveVariables_sample, cluster = grp), stand = FALSE, geom = "point", pointsize = 1, title = "Cluster Plot")
+
+```
+
+### CONTINGENCY TABLE
+```{r}
+
+clust.num <- cutree(aggl.clust.c, k = 2)
+tabl = prop.table(table(clust.num,isCanceled_sample))*100
+tabl
+```
+```{r}
+tabl[1,2]/(tabl[1]+ tabl[1,2])*100 # % of Cancelations of Group 1
+tabl[2,2]/(tabl[2]+tabl[2,2])*100 # % of Cancelations of Group 2
+```
+
+
+
+### SILHOUETTE PLOT
+
+
+```{r}
+grp <- cutree(aggl.clust.c, k = 2)
+# aggl.clust.c <- hclust(gower_dist, method = "complete") 
+sil_cl <- silhouette(grp,gower_dist, title=title(main = 'Good'))
+# rownames(sil_cl) <- rownames(grp)
+plot(sil_cl)
+```
+
+
+## NON- HIERARCHICAL CLUSTERING
+
+### PAM
+
+#### CLUSTER PLOT
+```{r}
+library(Rtsne)
+pam_fit <- pam(gower_dist, diss = TRUE, k = 4)
+
+tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
+tsne_data <- tsne_obj$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(pam_fit$clustering))
+ggplot(aes(x = X, y = Y), data = tsne_data) +
+  geom_point(aes(color = cluster))
+```
+
+#### CONTINGENCY TABLE
+
+```{r}
+pam_fit$clustering<- as.factor(pam_fit$clustering)
+tabl = prop.table(table(pam_fit$clustering,isCanceled_sample))*100
+tabl
+```
+
+```{r}
+tabl[1,2]/(tabl[1]+ tabl[1,2])*100 # % of Cancelations of Group 1
+tabl[2,2]/(tabl[2]+tabl[2,2])*100 # % of Cancelations of Group 2
+tabl[3,2]/(tabl[3]+tabl[3,2])*100 # % of Cancelations of Group 3
+tabl[4,2]/(tabl[4]+tabl[4,2])*100 # % of Cancelations of Group 4
+# tabl[5,2]/(tabl[5]+tabl[5,2])*100 # % of Cancelations of Group 5
+# tabl[6,2]/(tabl[6]+tabl[6,2])*100 # % of Cancelations of Group 6
+# tabl[7,2]/(tabl[7]+tabl[7,2])*100 # % of Cancelations of Group 7
+# tabl[8,2]/(tabl[8]+tabl[8,2])*100 # % of Cancelations of Group 8
+# tabl[9,2]/(tabl[9]+tabl[9,2])*100 # % of Cancelations of Group 9
+# tabl[10,2]/(tabl[10]+tabl[10,2])*100 # % of Cancelations of Group 10
+```
+#### SILHOUETTE PLOT
+```{r}
+fviz_silhouette(pam_fit)
+```
+
+### CLARA
+#### CLUSTER PLOT
+```{r}
+library(cluster)
+claraC2 = clara(numericVariables, 2,
+                    samples = 1000, correct.d = FALSE)
+fviz_cluster(claraC2, geom = "point", pointsize = 1, ellipse.type = "norm")
+```
+
+
+
+#### CONTINGENCY TABLE
+```{r}
+claraC2$clustering <- as.factor(claraC2$clustering)
+tabl = prop.table(table(claraC2$clustering,isCanceled_sample))*100
+tabl
+```
+
+```{r}
+tabl[1,2]/(tabl[1] + tabl[1,2])*100 # % of Cancelations of Group 1
+tabl[2,2]/(tabl[2] + tabl[2,2])*100 # % of Cancelations of Group 2
+```
+#### SILHOUETTE PLOT
+```{r}
+fviz_silhouette(claraC2)
+```
+
+### FUZZY ANALYSIS CLUSTERING
+#### CLUSTER PLOT
+```{r}
+library(Rtsne)
+fanny_fit <- fanny(gower_dist, diss = TRUE, k = 2)
+
+tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
+tsne_data <- tsne_obj$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(fanny_fit$clustering))
+ggplot(aes(x = X, y = Y), data = tsne_data) +
+  geom_point(aes(color = cluster))
+```
+```{r}
+# Coeficiente de segmentación normalizado:
+fanny_fit$coeff
+```
+#### CONTINGENCY TABLE
+```{r}
+fanny_fit$clustering <- as.factor(fanny_fit$clustering)
+tabl = prop.table(table(fanny_fit$clustering,isCanceled_sample))*100
+tabl
+```
+```{r}
+tabl[1,2]/(tabl[1]+ tabl[1,2])*100 # % of Cancelations of Group 1
+tabl[2,2]/(tabl[2]+tabl[2,2])*100 # % of Cancelations of Group 2
+```
+
+#### SILHOUETTE PLOT
+```{r}
+fviz_silhouette(fanny_fit)
+```
+# DIMENSION REDUCTION
+
+## CORRESPONDENCE ANALYSIS
+### RESERVED ROOM VS  DISTRIBUTION CHANNEL
+```{r}
+roomChannel = as.data.frame.matrix(table(raw_data$DistributionChannel, raw_data$ReservedRoomType))
+roomChannel
+
+as.table(as.matrix(roomChannel))
+```
+```{r}
+roomChannelScaled = scale(roomChannel)
+roomChannelScaled
+```
+
+#### Independence Test
+```{r}
+test.ind = chisq.test(roomChannel)
+test.ind
+
+# The result of the test confirms the possibility of rejecting the hypotheses of independence between categories of rows and columns, or, what is the same, we can affirm that there is a relationship between them. The rest of the tests presented below allow us to help visualize and interpret the test result.
+```
+
+
+
+#### Analysis
+```{r}
+roomChannelt = as.table(as.matrix(roomChannel))
+roomChannelt
+```
+```{r}
+library("FactoMineR")
+# tab1 <- as.data.frame.matrix(table(as.factor(df$X1),as.factor(df$X2)))
+# res.ca <- CA(tab1, graph = FALSE)
+```
+
+```{r}
+library(FactoMineR)
+roomChannel.ca=CA(roomChannel, graph = FALSE)
+```
+
+```{r}
+summary(roomChannel.ca)
+```
+
+```{r}
+fviz_ca_biplot(roomChannel.ca, map ="rowprincipal", arrow = c(TRUE, TRUE))
+```
+
+```{r}
+fviz_ca_biplot(roomChannel.ca, map ="colgreen",
+               arrow = c(TRUE, FALSE))+
+        ggtitle("Contribution of Distribution Channels to the dimensions")
+```
+
+```{r}
+fviz_ca_biplot(roomChannel.ca, map ="rowgreen",
+               arrow = c(FALSE, TRUE))+
+        ggtitle("Contribution of Room Types to the dimensions")
+```
+
+
+
+### COUNTRY  VS  RESERVED ROOM
+```{r}
+countryRoom = as.data.frame.matrix(table(raw_data$Country, raw_data$ReservedRoomType))
+countryRoom
+```
+#### Independence Test
+```{r}
+test.ind = chisq.test(countryRoom)
+test.ind
+
+# The result of the test confirms the possibility of rejecting the hypotheses of independence between categories of rows and columns, or, what is the same, we can affirm that there is a relationship between them. The rest of the tests presented below allow us to help visualize and interpret the test result.
+```
+
+
+
+
+
+#### Analysis
+
+```{r}
+library(FactoMineR)
+countryRoom.ca=CA(countryRoom, graph = FALSE)
+```
+
+
+```{r}
+summary(countryRoom.ca)
+```
+```{r}
+fviz_ca_biplot(countryRoom.ca, map ="rowprincipal", arrow = c(TRUE, TRUE))
+```
+```{r}
+fviz_ca_biplot(countryRoom.ca, map ="colgreen",
+               arrow = c(TRUE, FALSE))+
+        ggtitle("Contribution of Country to the dimensions")
+```
+```{r}
+fviz_ca_biplot(countryRoom.ca, map ="rowgreen",
+               arrow = c(FALSE, TRUE))+
+        ggtitle("Contribution of Room Type to the dimensions")
+```
+
+
+## PCA
+```{r}
+# Only numeric Variables for clustering
+numericVariables <- predictiveVariablesNonZero[c(17,7,2,3,9,13,8,16,1,12,11,18,5,6,19)]
+normalizeData <- function(x){
+  m <- mean(x)
+  s <- sd(x)
+  x <- (x - m)/s
+}
+
+numericVariables <- apply(numericVariables, 2, normalizeData)
+```
+### EXPLORATORY FACTOR ANALYSIS
+In order to apply these unsupervised learning techniques, i.e. PCA, our data set must have some properties:
+
+#### Determinant of the correlation matrix
+
+The determinant of our correlation matrix is 0.04720488. As we have a low determinant near to 0, it makes sense to apply PCA to reduce dimensions, because it also tells us that there is a high correlation between the variables studied.
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=7, fig.height=2.5}
+
+########################################
+# DETERMINANT OF THE CORRELATION MATRIX#
+########################################
+det(cor(numericVariables, 
+        use = "complete.obs"))
+```
+#### KMO
+
+For reference, Kaiser put the following values on the results:
+0.00 to 0.49 unacceptable.
+0.50 to 0.59 miserable.
+0.60 to 0.69 mediocre.
+0.70 to 0.79 middling.
+0.80 to 0.89 meritorious.
+0.90 to 1.00 marvelous.
+
+So in our case, our variables are meritorious to apply factor analysis as our Overall MSA = 0.8.
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=7, fig.height=2.5}
+library(psych)
+# Measure of Sample Adequacy through the factor of Kaiser-Meyer-Olkin factor adequacy
+KMO(cor(numericVariables, 
+        use = "complete.obs"))
+```
+#### Bartlett's Test of Sphericity
+
+In our case the p-value is equal to 0, so the factor analysis will be useful with our data as we are accepting the alternative hypothesis that our variables are correlated enough and diverging from the identity matrix.
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=7, fig.height=2.5}
+p_value <- cortest.bartlett(cor(numericVariables), n = NULL,diag=TRUE)$p.value
+p_value
+```
+
+#### Conclusions of the data exploratory analysis
+
+After doing all these tests we can apply a data reduction technique such as the Principal Component Analysis
+with confidence.
+
+
+
+### PCA
+
+A dimensionality reduction technique such as a PCA makes sense to see what variables can be explained in the same dimension.
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=3, fig.height=2.5}
+library(FactoMineR)
+#######################################################
+# Individuals factor map and Variables factor map(PCA)#
+#######################################################
+pca = PCA(numericVariables, graph = T,scale.unit = FALSE)# scales by default
+```
+
+As we can see in Individuals factor map, the directions of Dim1 and Dim2 are clearly orthogonal and explain 10.4% of the variance:
+
+- 6% of the variance can be explained in Dim1.
+
+- 4.4% of the variance can be explained in Dim2.
+
+If the first two factors together explain most of the variability in the original 9 variables, then those factors are clearly a good, simpler substitute for all 9 variables. We can drop the rest without losing much of the original variability.
+
+But if it takes 7 factors to explain most of the variance in those 9 variables, we might as well just use the original 9.
+
+In this case we probably need more than 2 dimensions to explain most of the variance as we are only explaining 53% of the variance.
+
+
+
+#### Loadings/Coordinates
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=3, fig.height=3.5}
+
+#######################
+# Loadings/Coordinates#
+#######################
+# The correlation between a variable and a PC is called loading. The variables can be plotted as points in the component
+# space using their loadings as coordinates. Here we can see the coordinates that correspond with the Variables factor map (PCA).
+pca$var$coord
+```
+Here we start seeing that with more dimensions we are able to explain a higher percentage of our dataset but we still don't see a clear difference between what the different dimensions explain.
+
+
+#### cos2: quality of the representation for variables on the factor map
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=7, fig.height=2.5}
+pca$var$cos2
+# layout.show(layout(matrix(c(1),ncol=1)))
+
+```
+
+
+
+#### Scree Plot
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=5, fig.height=4.5}
+#############
+# Scree Plot#
+#############
+# The point where the slope of the curve is clearly leveling off (the “elbow) indicates the number of factors
+# that should be generated by the analysis.
+fviz_eig(pca, addlabels = TRUE, hjust = -0.3) + 
+  labs(title = "Scree plot", x = "Dimensions", y = "% Variance explained") +
+  theme_minimal()
+```
+
+#### Contributions
+
+All variables contribute to Dim1 or Dim2 above the threshold.
+If the contribution of the variables were uniform, the expected value would be 1/length(variables) 
+
+So this is the expected average contribution that we can use as a threshold.
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=5, fig.height=4.5}
+fviz_contrib(pca, choice="var", axes = 1 )+
+  labs(title = "Contributions to Dim 1")
+# If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/9 = 11.1%. So this is
+# the expected average contribution that we can use as a threshold.
+```
+
+Using that as a threshold, here we can see the highest contributions to Dim1: 
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=5, fig.height=4.5}
+fviz_contrib(pca, choice="var", axes = 2 )+
+  labs(title = "Contributions to Dim 2")
+```
+
+Using that as a threshold, here we can see the highest contributions to Dim2: length, lbh, wskull, ltibio.
+
+
+
+#### Eigenvalues
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=5, fig.height=4.5}
+get_eig(pca)
+```
+
+The variance percentage and cumulative variance percentage changes less once we get to the fourth or fifth dimension.
+
+
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=5, fig.height=4.5}
+###################
+# Varimax method 2#
+###################
+# Now with varimax rotation, Kaiser-normalized 
+# by default:
+pc2 = psych::principal(cor(numericVariables), nfactors=2, 
+                       rotate = "varimax", scores = TRUE)
+pc2
+
+```
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE, fig.width=5, fig.height=4.5}
+pc2$loadings
+pca$var$coord
+```
+
+El segundo documento, de extensión máxima 6 pp, resolverá un problema de predicción siendo la variable objetivo predecir si la reserva se cancela o no, utilizando las técnicas de regresión estudiadas en la asignatura.
+
+
+#PREDICTION
+
+## LOGISTIC REGRESSION
+Logistic regression is a method for fitting a regression curve, y = f(x), when y is a categorical variable.
+The typical use of this model is predicting y given a set of predictors x. The predictors can be continuous, categorical or a mix of both.
+- PREDICTIVE MODEL: Multicolineality is not relevant as we are not searching for an explanatory model.
+### TRAIN AND TEST
+```{r}
+#TRAINING AND TESTING DATA
+set.seed(131822)
+n <- nrow(raw_data_prediction)
+scaleDF  <- scale(raw_data_prediction)
+id_train <- sample(1:n , 0.80*n)
+df.train <- as.data.frame(scaleDF[id_train,])
+df.train$IsCanceled <- raw_data[id_train,]$IsCanceled
+df.test  <- as.data.frame(scaleDF[-id_train,])
+df.test$IsCanceled <- raw_data[-id_train,]$IsCanceled
+```
+#### Train Target Variable %
+```{r}
+target <- as.data.frame(df.train %>% group_by(IsCanceled) %>% summarise(counts = n())) %>% mutate(perc = counts/nrow(df.train))
+ggplot(target, aes(x = IsCanceled, y = perc)) + geom_bar(stat = "identity") +
+  geom_text(aes(label = round(perc,2)))
+```
+#### Test Target Variable %
+```{r}
+target <- as.data.frame(df.test %>% group_by(IsCanceled) %>% summarise(counts = n())) %>% mutate(perc = counts/nrow(df.test))
+ggplot(target, aes(x = IsCanceled, y = perc)) + geom_bar(stat = "identity") +
+  geom_text(aes(label = round(perc,2)))
+```
+### Logistic Regression
+```{r}
+#######################
+# COST IN TRAINING SET#
+#######################
+searchgrid = seq(0.0001,0.6, 0.01)
+result = cbind(searchgrid, NA)
+# in the cost function, both r and pi are vectors, r=truth, pi=predicted probability
+cost1 <- function(r, pi){
+  weight1 <- 1
+  weight0 <- 1
+  c1 <- (r == 1) & (pi < pcut) # true if actual 1 but predict 0. FP (False Positive)
+  c0 <- (r == 0) & (pi > pcut) #true if actual 0 but predict 1. FN (False Negative)
+  return(mean(weight1 * c1 + weight0 * c0))
+}
+```
+#### Train and Test sets for Regularization
+```{r}
+## Train
+datos_train_x <- model.matrix(IsCanceled ~ ., df.train)[, -1]
+datos_train_y <- df.train$IsCanceled
+## test
+datos_test_x <- model.matrix(IsCanceled ~ ., df.test)[, -1]
+datos_test_y <- df.test$IsCanceled
+```
+#### Logistic Regression model
+```{r}
+df.glm1 <- glm(IsCanceled ~ ., family = binomial, df.train)
+prob <- predict(df.glm1,type = "response")
+for (i in 1:length(searchgrid))
+{
+  pcut <- result[i,1]
+  #assign the cost to the 2nd col
+  result[i,2] <- cost1(df.train$IsCanceled, prob)
+}
+plot(result, ylab = "Cost in Training Set")
+result[which.min(result[,2]),]
+# searchgrid            
+# 0.4401000  0.1512731
+```
+### PREDICTION TRAIN
+```{r}
+#######################
+cut_off <- 0.4401000#
+#######################
+prob.glm1.insample <- predict(df.glm1,type = "response")
+predicted.glm1.insample <- (prob.glm1.insample > cut_off)
+predicted.glm1.insample <- as.numeric(predicted.glm1.insample)
+###################
+# CONFUSION MATRIX#
+###################
+table(df.train$IsCanceled, predicted.glm1.insample, dnn = c("Truth","Predicted"))
+########
+# ERROR#
+########
+mean(ifelse(df.train$IsCanceled != predicted.glm1.insample, 1, 0))
+
+mean(ifelse(df.train$IsCanceled == predicted.glm1.insample, 1, 0))
+```
+### PREDICTION TEST
+```{r}
+#######################
+cut_off <- 0.4401000#
+#######################
+prob.glm1.outsample <- predict(df.glm1, type = "response",newdata = df.test)
+predicted.glm1.outsample <- (prob.glm1.outsample > cut_off)
+predicted.glm1.outsample <- as.numeric(predicted.glm1.outsample)
+###################
+# CONFUSION MATRIX#
+###################
+table(df.test$IsCanceled, predicted.glm1.outsample, dnn = c("Truth","Predicted"))
+########
+# ERROR#
+########
+mean(ifelse(df.test$IsCanceled != predicted.glm1.outsample, 1, 0))
+
+mean(ifelse(df.train$IsCanceled == predicted.glm1.insample, 1, 0))
+```
+
+
+### ROC CURVE
+Our Area Under the Curve is 
+ROC curve, is a graphical plot that illustrates the diagnostic ability of a binary classifier system as its discrimination threshold is varied. It quantifies the tradeoff we're making between the TPR (True Positive Rate) and the false positive rate (FPR) at various cutoff settings ( between 0 and 1 ). As TPR increases, FPR increases too, so we want to reach the highest TPR before the FPR increases too much. This means that we want our AUC to be really close to 1.
+```{r}
+library('ROCR')
+############
+# ROC CURVE#####################################################################################################
+############
+pred <- prediction(prob.glm1.outsample, df.test$IsCanceled)
+perf <- performance(pred, "tpr", "fpr")
+rocr.auc.lr = as.numeric(performance(pred, "auc")@y.values)
+plot(perf, colorize = TRUE,
+      main = 'ROC Curve')
+mtext(paste('Logistic Regression - auc : ', round(rocr.auc.lr, 5)))
+```
+```{r}
+#Get the AUC
+unlist(slot(performance(pred, "auc"), "y.values"))
+# 
+```
+```{r}
+####################################################################
+# ODDS OF CANCELED BASED ON WEIGHTS(COEFFICIENTS) GIVEN TO VARIABLES#
+####################################################################
+# How odds of default change by changing one unit of the variable. 
+temp_compare <- as.data.frame(exp(cbind(OR = coef(df.glm1))))
+temp_compare
+library(data.table)
+setDT(temp_compare, keep.rownames = TRUE)[]
+temp_compare <- temp_compare[order(temp_compare$OR,decreasing = TRUE),]
+temp_compare <- temp_compare[!is.infinite(temp_compare$OR)]
+temp_compare <- temp_compare[!is.na(temp_compare$OR)]
+```
+#### Lasso for Feature Selection
+```{r}
+library(glmnet)
+df.Lasso <- glmnet(datos_train_x, as.factor(datos_train_y), alpha = 1.0, family = "binomial")
+prob <- predict(df.Lasso, newx = datos_train_x, type = "response")
+res <- c()
+for (j in 1:ncol(prob)){
+  for (i in 1:length(searchgrid))
+  {
+    pcut <- result[i,1]
+    #assign the cost to the 2nd col
+    result[i,2] <- cost1(df.train$IsCanceled, prob[,j])
+  }
+##plot(result, ylab = "Cost in Training Set")
+res <- c(res,as.double(result[which.min(result[,2]),][2]))
+}
+which(res == min(res))[1]
+result = cbind(searchgrid, NA)
+for (i in 1:length(searchgrid))
+  {
+    pcut <- result[i,1]
+    #assign the cost to the 2nd col (which(res == min(res))[1])
+    result[i,2] <- cost1(df.train$IsCanceled, prob[,98])
+  }
+plot(result, ylab = "Cost in Training Set")
+result[which.min(result[,2]),]
+# searchgrid            
+#  0.4301000  0.1511483
+```
+### PREDICTION TRAIN
+```{r}
+#######################
+cut_off <- 0.4301000#
+#######################
+prob.Lasso <-  as.double(prob[,98])
+prob.Lasso <- (prob.Lasso > cut_off)
+prob.Lasso <- as.numeric(prob.Lasso)
+###################
+# CONFUSION MATRIX#
+###################
+table(df.train$IsCanceled, prob.Lasso, dnn = c("Truth","Predicted"))
+########
+# ERROR#
+########
+mean(ifelse(df.train$IsCanceled != prob.Lasso, 1, 0))
+```
+### PREDICTION TEST
+```{r}
+#######################
+cut_off <- 0.4301000#
+#######################
+prob <- predict(df.Lasso, newx = datos_test_x, type = "response")
+prob.Lasso <-  as.double(prob[,98])
+prob.Lasso <- (prob.Lasso > cut_off)
+prob.Lasso <- as.numeric(prob.Lasso)
+###################
+# CONFUSION MATRIX#
+###################
+table(df.test$IsCanceled, prob.Lasso, dnn = c("Truth","Predicted"))
+########
+# ERROR#
+########
+mean(ifelse(df.test$IsCanceled != prob.Lasso, 1, 0))
+
+
+mean(ifelse(df.train$IsCanceled == prob.Lasso, 1, 0))
+```
+### ROC CURVE
+Our Area Under the Curve is 
+ROC curve, is a graphical plot that illustrates the diagnostic ability of a binary classifier system as its discrimination threshold is varied. It quantifies the tradeoff we're making between the TPR (True Positive Rate) and the false positive rate (FPR) at various cutoff settings ( between 0 and 1 ). As TPR increases, FPR increases too, so we want to reach the highest TPR before the FPR increases too much. This means that we want our AUC to be really close to 1.
+```{r}
+############
+# ROC CURVE#####################################################################################################
+############
+pred <- prediction(prob.Lasso, df.test$IsCanceled)
+perf <- performance(pred, "tpr", "fpr")
+rocr.auc.lr = as.numeric(performance(pred, "auc")@y.values)
+plot(perf, colorize = TRUE,
+      main = 'ROC Curve')
+mtext(paste('Logistic Regression - auc : ', round(rocr.auc.lr, 5)))
+```
+```{r}
+#Get the AUC
+unlist(slot(performance(pred, "auc"), "y.values"))
+# 
+```
+```{r}
+####################################################################
+# ODDS OF DEFAULT BASED ON WEIGHTS(COEFFICIENTS) GIVEN TO VARIABLES#
+####################################################################
+# How odds of default change by changing one unit of the variable.
+temp_compareL <- as.data.frame((cbind(OR = coef(df.Lasso)[,10])))
+temp_compareL
+setDT(temp_compareL, keep.rownames = TRUE)[]
+temp_compareL <- temp_compareL[order(temp_compareL$OR,decreasing = TRUE),]
+temp_compareL <- temp_compareL[!is.infinite(temp_compareL$OR)]
+temp_compareL <- temp_compareL[!is.na(temp_compareL$OR)]
+temp_compareL
+```
+
+
+
+El tercer documento, de extensión máxima 6 pp, resolverá un problema de predicción de series temporales. En primer lugar, se debe elaborar la serie semanal de reservas realizadas. Se deberá plantear un modelo adecuado para predecir esta serie temporal.
+
+## TIME SERIES ANALYSIS
+ 
+Time Series:
+HOTEL'S MANAGEMENT
+  - Number of Reservations - ArrivalDate
+  - Number of Reservations that will CheckOut - ArrivalDate
+  - Number of Reservations that will not CheckOut - ArrivalDate
+  
+HOTEL'S MARKETING  
+  - Number of Reservations that will CheckOut - ReservationDate
+  - Number of Reservations that will not CheckOut- ReservationDate
+  
+
+#### DATA PRE-PROCESSING
+
+- We obtain ArrivalDate from different Columns.
+
+
+```{r}
+erase_columns <- c(12, 13, 14, 15, 19, 20, 22, 26, 30)
+timeSeriesDataSet <- timeSeriesDataSet[ -erase_columns ]
+```
+
+#### EXPLORATORY DATA ANALYSIS - TIME SERIES
+
+##### TIME SERIES FIRST VIEW
+###### Arrival Date
+```{r}
+yearMonthDay <- function(y, m, d){
+  date <- paste(as.character(y),paste(m, d, sep = "-"), sep = "-")
+  date <- as.Date(date, "%Y-%m-%d")
+}
+arrival_date <- yearMonthDay(y = timeSeriesDataSet$ArrivalDateYear,
+                             m = timeSeriesDataSet$ArrivalDateMonth,
+                             d = timeSeriesDataSet$ArrivalDateDayOfMonth)
+
+arrival_date <- as.data.frame(arrival_date) 
+
+a = arrival_date %>% group_by(arrival_date) %>% summarise(n = n())
+data <- as.xts(a$n,order.by=as.Date(a$arrival_date))
+weekly <- apply.weekly(data,sum)
+weekly <- as.data.frame(weekly)
+
+#index of a dataframe to columns
+library(data.table)
+setDT(weekly, keep.rownames = TRUE)[]
+weekly$rn <- as.Date(weekly$rn)
+arrivalDatePlot <- weekly
+ggplot(data = weekly,
+      aes(x = rn))+
+      geom_line(aes(y = V1, color = "Number of Reservations for ArrivalDate"))+
+      ylab('Number of Reservations for that Arrival Date')+
+      xlab('Date - Weekly')+
+      theme(legend.position = "none")
+```
+###### Reservation Date
+- ReservationDate = ArrivalDate - LeadTime
+```{r}
+yearMonthDay <- function(y, m, d){
+  date <- paste(as.character(y),paste(m, d, sep = "-"), sep = "-")
+  date <- as.Date(date, "%Y-%m-%d")
+}
+arrival_date <- yearMonthDay(y = timeSeriesDataSet$ArrivalDateYear,
+                             m = timeSeriesDataSet$ArrivalDateMonth,
+                             d = timeSeriesDataSet$ArrivalDateDayOfMonth)
+reservationDate <- arrival_date - timeSeriesDataSet$LeadTime
+reservationDate <- as.data.frame(reservationDate) 
+
+# reservationDate <- reservationDate%>%rename( 'reservationDate' = 'arrival_date' )
+
+         
+a = reservationDate %>% group_by(reservationDate) %>% summarise(n = n())
+data <- as.xts(a$n,order.by=as.Date(a$reservationDate))
+weekly <- apply.weekly(data,sum)
+weekly <- as.data.frame(weekly)
+
+#index of a dataframe to columns
+library(data.table)
+setDT(weekly, keep.rownames = TRUE)[]
+weekly$rn <- as.Date(weekly$rn)
+reservationDatePlot <- weekly
+ggplot(data = weekly,
+      aes(x = rn))+
+      geom_line(aes(y = V1, color = "Number of Reservations for Reservation Date"))+
+      ylab('Number of Reservations for that Reservation Date')+
+      xlab('Date - Weekly')+
+      theme(legend.position = "none")
+```
+###### Arrival and Reservation Date
+```{r}
+ggplot() +
+  geom_line(data = arrivalDatePlot, aes(x = rn, y = V1, col = "Arrival Date")) + 
+  geom_line(data = reservationDatePlot, aes(x = rn, y = V1, col = "Reservation Date"))+
+  xlab('Date - Weeks')+
+  ylab('Number of Reservations')+
+  ggtitle('Number of Reservations')
+```
+
+```{r}
+nonCheckoutTS<-timeSeriesDataSet%>%filter(IsCanceled == 1)
+checkoutTS <-timeSeriesDataSet%>%filter(IsCanceled == 0)
+```
+
+
+###### Arrival Date Checkout
+```{r}
+
+arrival_dateCheckout <- yearMonthDay(y = checkoutTS$ArrivalDateYear,
+                             m = checkoutTS$ArrivalDateMonth,
+                             d = checkoutTS$ArrivalDateDayOfMonth)
+
+arrival_dateCheckout <- as.data.frame(arrival_dateCheckout) 
+
+a = arrival_dateCheckout %>% group_by(arrival_dateCheckout) %>% summarise(n = n())
+data <- as.xts(a$n,order.by=as.Date(a$arrival_dateCheckout))
+weekly <- apply.weekly(data,sum)
+weekly <- as.data.frame(weekly)
+
+#index of a dataframe to columns
+library(data.table)
+setDT(weekly, keep.rownames = TRUE)[]
+weekly$rn <- as.Date(weekly$rn)
+arrivalDatePlotCheckout <- weekly
+ggplot(data = weekly,
+      aes(x = rn))+
+      geom_line(aes(y = V1, color = "Number of Reservations for ArrivalDate of people who Checkout"))+
+      ylab('Number of Reservations for that Arrival Date of people who Checkout')+
+      xlab('Date - Weekly')+
+      theme(legend.position = "none")
+```
+
+
+###### Arrival Date Canceled
+```{r}
+
+arrival_dateCanceled <- yearMonthDay(y = nonCheckoutTS$ArrivalDateYear,
+                             m = nonCheckoutTS$ArrivalDateMonth,
+                             d = nonCheckoutTS$ArrivalDateDayOfMonth)
+
+arrival_dateCanceled <- as.data.frame(arrival_dateCanceled) 
+
+a = arrival_dateCanceled %>% group_by(arrival_dateCanceled) %>% summarise(n = n())
+data <- as.xts(a$n,order.by=as.Date(a$arrival_dateCanceled))
+weekly <- apply.weekly(data,sum)
+weekly <- as.data.frame(weekly)
+
+#index of a dataframe to columns
+library(data.table)
+setDT(weekly, keep.rownames = TRUE)[]
+weekly$rn <- as.Date(weekly$rn)
+arrivalDatePlotCanceled <- weekly
+ggplot(data = weekly,
+      aes(x = rn))+
+      geom_line(aes(y = V1, color = "Number of Reservations for ArrivalDate of people who Checkout"))+
+      ylab('Number of Reservations for that Arrival Date of people who Checkout')+
+      xlab('Date - Weekly')+
+      theme(legend.position = "none")
+```
+
+
+###### Arrival Date Checkout and Canceled
+```{r}
+ggplot() +
+  geom_line(data = arrivalDatePlotCheckout, aes(x = rn, y = V1, col = "Arrival Date Checkout")) + 
+  geom_line(data = arrivalDatePlotCanceled, aes(x = rn, y = V1, col = "Arrival Date Canceled"))+
+  xlab('Date - Weeks')+
+  ylab('Number of Reservations')+
+  ggtitle('Number of Reservations')
+```
+
+
+
+###### Reservation Date Canceled
+```{r}
+reservetion_dateNonCheckout <- yearMonthDay(y = nonCheckoutTS$ArrivalDateYear,
+                             m = nonCheckoutTS$ArrivalDateMonth,
+                             d = nonCheckoutTS$ArrivalDateDayOfMonth)
+reservetion_dateNonCheckout <- reservetion_dateNonCheckout - nonCheckoutTS$LeadTime
+
+reservetion_dateNonCheckout <- as.data.frame(reservetion_dateNonCheckout) 
+
+a = reservetion_dateNonCheckout %>% group_by(reservetion_dateNonCheckout) %>% summarise(n = n())
+data <- as.xts(a$n,order.by=as.Date(a$reservetion_dateNonCheckout))
+weekly <- apply.weekly(data,sum)
+weekly <- as.data.frame(weekly)
+
+#index of a dataframe to columns
+library(data.table)
+setDT(weekly, keep.rownames = TRUE)[]
+weekly$rn <- as.Date(weekly$rn)
+reservetionDatePlotCanceled <- weekly
+ggplot(data = weekly,
+      aes(x = rn))+
+      geom_line(aes(y = V1, color = "Number of Reservations ReservationDate Canceled"))+
+      ylab('Number of Reservations ReservationDate Canceled')+
+      xlab('Date - Weekly')+
+      theme(legend.position = "none")
+```
+
+###### Reservation Date Checkout
+```{r}
+reservetion_dateCheckout <- yearMonthDay(y = checkoutTS$ArrivalDateYear,
+                             m = checkoutTS$ArrivalDateMonth,
+                             d = checkoutTS$ArrivalDateDayOfMonth)
+reservetion_dateCheckout <- reservetion_dateCheckout - checkoutTS$LeadTime
+
+reservetion_dateCheckout <- as.data.frame(reservetion_dateCheckout) 
+
+a = reservetion_dateCheckout %>% group_by(reservetion_dateCheckout) %>% summarise(n = n())
+data <- as.xts(a$n,order.by=as.Date(a$reservetion_dateCheckout))
+weekly <- apply.weekly(data,sum)
+weekly <- as.data.frame(weekly)
+
+#index of a dataframe to columns
+library(data.table)
+setDT(weekly, keep.rownames = TRUE)[]
+weekly$rn <- as.Date(weekly$rn)
+reservetionDatePlotCheckout <- weekly
+ggplot(data = weekly,
+      aes(x = rn))+
+      geom_line(aes(y = V1, color = "Number of Reservations ReservationDate Checkout"))+
+      ylab('Number of Reservations ReservationDate Checkout')+
+      xlab('Date - Weekly')+
+      theme(legend.position = "none")
+```
+
+###### Reservation Date Checkout and Canceled
+```{r}
+ggplot() +
+  geom_line(data = reservetionDatePlotCheckout, aes(x = rn, y = V1, col = "Reservation Date Checkout")) + 
+  geom_line(data = reservetionDatePlotCanceled, aes(x = rn, y = V1, col = "Reservetion Date Canceled"))+
+  xlab('Date - Weeks')+
+  ylab('Number of Reservations')+
+  ggtitle('Number of Reservations')
+```
+
+###### Arrival Date for ADR
+```{r}
+yearMonthDay <- function(y, m, d){
+  date <- paste(as.character(y),paste(m, d, sep = "-"), sep = "-")
+  date <- as.Date(date, "%Y-%m-%d")
+}
+arrival_date <- yearMonthDay(y = timeSeriesDataSet$ArrivalDateYear,
+                             m = timeSeriesDataSet$ArrivalDateMonth,
+                             d = timeSeriesDataSet$ArrivalDateDayOfMonth)
+
+arrival_dateAdr<- as.data.frame(arrival_date) 
+arrival_dateAdr$ADR <- raw_data$ADR
+colnames(arrival_dateAdr) <- c("arrival_date", "ADR")
+
+a = arrival_dateAdr %>% group_by(arrival_date) %>% summarize(totalMean=mean(ADR))
+
+data <- as.xts(a$totalMean,order.by=as.Date(a$arrival_date))
+weekly <- apply.weekly(data,mean)
+weekly <- as.data.frame(weekly)
+
+#index of a dataframe to columns
+library(data.table)
+setDT(weekly, keep.rownames = TRUE)[]
+weekly$rn <- as.Date(weekly$rn)
+arrivalDatePlotAdr <- weekly
+ggplot(data = weekly,
+      aes(x = rn))+
+      geom_line(aes(y = V1, color = "ADR for ArrivalDate"))+
+      ylab('ADR for that Arrival Date')+
+      xlab('Date - Weekly')+
+      theme(legend.position = "none")
+```
+###### Arrival Date, Arrival Date not canceled, Mean ADR Date
+```{r}
+ggplot() +
+  geom_line(data = arrivalDatePlot, aes(x = rn, y = V1, col = "Arrival Date")) + 
+  geom_line(data = arrivalDatePlotAdr, aes(x = rn, y = V1, col = "Mean ADR Date"))+
+  geom_line(data = arrivalDatePlotCheckout, aes(x = rn, y = V1, col = "Arrival Date not Canceled"))+
+  xlab('Date - Weeks')+
+  ylab('Number of Reservations')+
+  ggtitle('Number of Reservations')
+```
+
+
+##### SEASONALITY
+```{r}
+  #Transform to zoo data (forecast package)
+  zReservationDateNumber=as.zoo(reservationDatePlot$V1)
+  zArrivalDateNumber=as.zoo(arrivalDatePlot$V1)
+  zAdrDateNumber = as.zoo(arrivalDatePlotAdr$V1)
+  
+  zArrivalDateCanceled = as.zoo(arrivalDatePlotCanceled$V1)
+  zArrivalDateCheckout = as.zoo(arrivalDatePlotCheckout$V1)
+  
+  zReservationDateCanceled = as.zoo(reservetionDatePlotCanceled$V1) 
+  zReservationDateCheckout = as.zoo(reservetionDatePlotCheckout$V1) 
+
+```
+
+```{r}
+ #Seasonal Plot
+  ggfreqplot(as.ts(zReservationDateNumber),freq=4,nrow=1,facet.labeller=c("1T","2T","3T","4T"))+ggtitle("Number of Reservations - Reservation Date ")
+
+ #Seasonal Plot
+  ggfreqplot(as.ts(zArrivalDateNumber),freq=4,nrow=1,facet.labeller=c("1T","2T","3T","4T"))+ggtitle("Number of Reservations - Arrival Date ")
+  
+  #Seasonal Plot
+  ggfreqplot(as.ts(zAdrDateNumber),freq=4,nrow=1,facet.labeller=c("1T","2T","3T","4T"))+ggtitle("Mean ADR  - Arrival Date ")
+  
+   #Seasonal Plot
+  ggfreqplot(as.ts(zArrivalDateCanceled),freq=4,nrow=1,facet.labeller=c("1T","2T","3T","4T"))+ggtitle("Mean ADR  - Arrival Date ")
+
+  #Seasonal Plot
+  ggfreqplot(as.ts(zArrivalDateCheckout),freq=4,nrow=1,facet.labeller=c("1T","2T","3T","4T"))+ggtitle("Mean ADR  - Arrival Date ")
+  
+    #Seasonal Plot
+  ggfreqplot(as.ts(zReservationDateCanceled),freq=4,nrow=1,facet.labeller=c("1T","2T","3T","4T"))+ggtitle("Mean ADR  - Arrival Date ")
+  
+   #Seasonal Plot
+  ggfreqplot(as.ts(zReservationDateCheckout),freq=4,nrow=1,facet.labeller=c("1T","2T","3T","4T"))+ggtitle("Mean ADR  - Arrival Date ")
+  
+```
+
+##### STATIONARITY - ACF - PACF
+Log transformation and differences
+```{r  echo = FALSE, message = FALSE, warning = FALSE}
+#Log transformation?
+zlArrivalDateNumber=log(zArrivalDateNumber)
+df_newl <- data.frame(value = as.vector(zlArrivalDateNumber),
+                     time = time(zlArrivalDateNumber))
+ggplot(df_newl)+geom_point(aes(x=time,y=value))+geom_line(aes(x=time,y=value))+ylab("Number of Reservations")+ggtitle("Number of Reservations for Arrival Date  LOG ")+xlab("Date - Weeks")
+
+#Difference
+ggtsdisplay(zlArrivalDateNumber)
+ggtsdisplay(diff(zlArrivalDateNumber))
+ggtsdisplay(diff(zlArrivalDateNumber,4))
+ggtsdisplay(diff(diff(zlArrivalDateNumber,4),1))
+```
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE}
+#Log transformation?
+zlReservationDateNumber=log(zReservationDateNumber)
+df_newl <- data.frame(value = as.vector(zReservationDateNumber),
+                     time = time(zReservationDateNumber))
+ggplot(df_newl)+geom_point(aes(x=time,y=value))+geom_line(aes(x=time,y=value))+ylab("Number of Reservations")+ggtitle("Number of Reservations for Arrival Date  LOG ")+xlab("Date - Weeks")
+
+#Difference
+ggtsdisplay(zlReservationDateNumber)
+ggtsdisplay(diff(zlReservationDateNumber))
+ggtsdisplay(diff(zlReservationDateNumber,4))
+ggtsdisplay(diff(diff(zlReservationDateNumber,4),1))
+```
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE}
+#Log transformation?
+zlAdrDateNumber=log(zAdrDateNumber)
+df_newl <- data.frame(value = as.vector(zAdrDateNumber),
+                     time = time(zAdrDateNumber))
+ggplot(df_newl)+geom_point(aes(x=time,y=value))+geom_line(aes(x=time,y=value))+ylab("Mean ADR ")+ggtitle("Mean ADR for Arrival Date  LOG ")+xlab("Date - Weeks")
+
+#Difference
+ggtsdisplay(zlAdrDateNumber)
+ggtsdisplay(diff(zlAdrDateNumber))
+ggtsdisplay(diff(zlAdrDateNumber,4))
+ggtsdisplay(diff(diff(zlAdrDateNumber,4),1))
+```
+
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE}
+#Log transformation?
+zlArrivalDateCanceled=log(zArrivalDateCanceled)
+df_newl <- data.frame(value = as.vector(zArrivalDateCanceled),
+                     time = time(zArrivalDateCanceled))
+ggplot(df_newl)+geom_point(aes(x=time,y=value))+geom_line(aes(x=time,y=value))+ylab("Mean ADR ")+ggtitle("Mean ADR for Arrival Date  LOG ")+xlab("Date - Weeks")
+
+#Difference
+ggtsdisplay(zlArrivalDateCanceled)
+ggtsdisplay(diff(zlArrivalDateCanceled))
+ggtsdisplay(diff(zlArrivalDateCanceled,4))
+ggtsdisplay(diff(diff(zlArrivalDateCanceled,4),1))
+```
+
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE}
+#Log transformation?
+zlArrivalDateCheckout=log(zArrivalDateCheckout)
+df_newl <- data.frame(value = as.vector(zArrivalDateCheckout),
+                     time = time(zArrivalDateCheckout))
+ggplot(df_newl)+geom_point(aes(x=time,y=value))+geom_line(aes(x=time,y=value))+ylab("Mean ADR ")+ggtitle("Mean ADR for Arrival Date  LOG ")+xlab("Date - Weeks")
+
+#Difference
+ggtsdisplay(zlArrivalDateCheckout)
+ggtsdisplay(diff(zlArrivalDateCheckout))
+ggtsdisplay(diff(zlArrivalDateCheckout,4))
+ggtsdisplay(diff(diff(zlArrivalDateCheckout,4),1))
+```
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE}
+#Log transformation?
+zlReservationDateCanceled=log(zReservationDateCanceled)
+df_newl <- data.frame(value = as.vector(zReservationDateCanceled),
+                     time = time(zReservationDateCanceled))
+ggplot(df_newl)+geom_point(aes(x=time,y=value))+geom_line(aes(x=time,y=value))+ylab("Mean ADR ")+ggtitle("Mean ADR for Arrival Date  LOG ")+xlab("Date - Weeks")
+
+#Difference
+ggtsdisplay(zlReservationDateCanceled)
+ggtsdisplay(diff(zlReservationDateCanceled))
+ggtsdisplay(diff(zlReservationDateCanceled,4))
+ggtsdisplay(diff(diff(zlReservationDateCanceled,4),1))
+```
+
+```{r  echo = FALSE, message = FALSE, warning = FALSE}
+#Log transformation?
+zlReservationDateCheckout=log(zReservationDateCheckout)
+df_newl <- data.frame(value = as.vector(zReservationDateCheckout),
+                     time = time(zReservationDateCheckout))
+ggplot(df_newl)+geom_point(aes(x=time,y=value))+geom_line(aes(x=time,y=value))+ylab("Mean ADR ")+ggtitle("Mean ADR for Arrival Date  LOG ")+xlab("Date - Weeks")
+
+#Difference
+ggtsdisplay(zlReservationDateCheckout)
+ggtsdisplay(diff(zlReservationDateCheckout))
+ggtsdisplay(diff(zlReservationDateCheckout,4))
+ggtsdisplay(diff(diff(zlReservationDateCheckout,4),1))
+```
+
+
+### MODELING
+
+#### ETS  
+##### TRAIN AND TEST DATA SET
+```{r}
+#Select number of observation to compare forecast
+cOmit=20
+
+#Data Size
+nObsArrival=length(zArrivalDateNumber)
+oArrivalDateNumber <- window(zArrivalDateNumber,start=index(zArrivalDateNumber[1]),end=index(zArrivalDateNumber[nObsArrival-cOmit]))
+
+#Data Size
+nObsReservation=length(zReservationDateNumber)
+oReservationDateNumber <- window(zReservationDateNumber,start=index(zReservationDateNumber[1]),end=index(zReservationDateNumber[nObsReservation-cOmit]))
+
+#Data Size
+nObsCanceled=length(zArrivalDateCanceled)
+oArrivalDateCanceled <- window(zArrivalDateCanceled,start=index(zArrivalDateCanceled[1]),end=index(zArrivalDateCanceled[nObsCanceled-cOmit]))
+
+#Data Size
+nObsCheckout=length(zArrivalDateCheckout)
+oArrivalDateCheckout <- window(zArrivalDateCheckout,start=index(zArrivalDateCheckout[1]),end=index(zArrivalDateCheckout[nObsCheckout-cOmit]))
+
+
+#Data Size
+nObsCheckout=length(zReservationDateCanceled)
+oReservationDateCanceled <- window(zReservationDateCanceled,start=index(zReservationDateCanceled[1]),end=index(zReservationDateCanceled[nObsCheckout-cOmit]))
+
+#Data Size
+nObsCheckout=length(zReservationDateCheckout)
+oReservationDateCheckout <- window(zReservationDateCheckout,start=index(zReservationDateCheckout[1]),end=index(zReservationDateCheckout[nObsCheckout-cOmit]))
+
+```
+
+
+##### TRAINING THE MODEL
+```{r}
+etsfitArrival<-ets(oArrivalDateNumber, lambda = "auto", use.initial.values = TRUE, nmse = 30)
+etsfitReservation<-ets(oReservationDateNumber, lambda = "auto", use.initial.values = TRUE, nmse = 30)
+
+etsfitArrivalCanceled<-ets(oArrivalDateCanceled, lambda = "auto", use.initial.values = TRUE, nmse = 30)
+
+etsfitArrivalCheckout<-ets(oArrivalDateCheckout, lambda = "auto", use.initial.values = TRUE, nmse = 30)
+
+etsfitReservationCanceled<-ets(oReservationDateCanceled, lambda = "auto", use.initial.values = TRUE, nmse = 30)
+
+etsfitReservationCheckout<-ets(oReservationDateCheckout, lambda = "auto", use.initial.values = TRUE, nmse = 30)
+```
+
+##### FORECAST
+```{r}
+#forecast model
+fArrival.ets=forecast(etsfitArrival, h = 20)
+fReservation.ets=forecast(etsfitReservation, h = 20)
+fCanceled.ets=forecast(etsfitArrivalCanceled, h = 20)
+fCheckout.ets=forecast(etsfitArrivalCheckout, h = 20)
+
+fCanceledReservation.ets=forecast(etsfitReservationCanceled, h = 20)
+fCheckoutReservation.ets=forecast(etsfitReservationCheckout, h = 20)
+```
+
+
+
+```{r}
+plot(fArrival.ets)
+lines(window(zArrivalDateNumber),type="o")
+```
+
+
+```{r}
+plot(fReservation.ets)
+lines(window(zReservationDateNumber),type="o")
+```
+```{r}
+plot(fCanceled.ets)
+lines(window(zArrivalDateCanceled),type="o")
+```
+```{r}
+plot(fCheckout.ets)
+lines(window(zArrivalDateCheckout),type="o")
+```
+
+```{r}
+plot(fCanceledReservation.ets)
+lines(window(zReservationDateCanceled),type="o")
+```
+
+```{r}
+plot(fCheckoutReservation.ets)
+lines(window(zReservationDateCheckout),type="o")
+```
+##### ERROR MEASUREMENTS
+
+###### Arrival Date
+```{r}
+#Actual and Forecast
+error_forecast_actual <- matrix(c(fArrival.ets$mean[1:cOmit],zArrivalDateNumber[(nObsArrival-cOmit+1):nObsArrival]),ncol=2)
+
+#MAE
+cat("MAE:",mean(abs(error_forecast_actual[,2]-error_forecast_actual[,1])))#1 forecast, 2 actual.
+# [1] 345.3866
+cat("\n\n")
+
+#BIAS
+bias = sum(error_forecast_actual[,1]-error_forecast_actual[,2]) * 1.0/length(error_forecast_actual[,2])
+cat('Bias %:', bias)
+```
+
+###### Reservation Date
+```{r}
+#Actual and Forecast
+error_forecast_actual <- matrix(c(fReservation.ets$mean[1:cOmit],zReservationDateNumber[(nObsReservation-cOmit+1):nObsReservation]),ncol=2)
+
+#MAE
+cat("MAE:",mean(abs(error_forecast_actual[,2]-error_forecast_actual[,1])))#1 forecast, 2 actual.
+# [1] 345.3866
+cat("\n\n")
+
+#BIAS
+bias = sum(error_forecast_actual[,1]-error_forecast_actual[,2]) * 1.0/length(error_forecast_actual[,2])
+cat('Bias %:', bias)
+```
+
+###### Arrival Date Canceled
+```{r}
+#Actual and Forecast
+error_forecast_actual <- matrix(c(fCanceled.ets$mean[1:cOmit],zArrivalDateCanceled[(nObsCanceled-cOmit+1):nObsCanceled]),ncol=2)
+
+error_forecast_actualCanceled <- error_forecast_actual
+
+#MAE
+cat("MAE:",mean(abs(error_forecast_actual[,2]-error_forecast_actual[,1])))#1 forecast, 2 actual.
+# [1] 345.3866
+cat("\n\n")
+
+#BIAS
+bias = sum(error_forecast_actual[,1]-error_forecast_actual[,2]) * 1.0/length(error_forecast_actual[,2])
+cat('Bias %:', bias)
+```
+
+###### Arrival Date Checkout
+```{r}
+#Actual and Forecast
+error_forecast_actual <- matrix(c(fCheckout.ets$mean[1:cOmit],zArrivalDateCheckout[(nObsCheckout-cOmit+1):nObsCheckout]),ncol=2)
+
+error_forecast_actualCheckout <- error_forecast_actual
+
+#MAE
+cat("MAE:",mean(abs(error_forecast_actual[,2]-error_forecast_actual[,1])))#1 forecast, 2 actual.
+# [1] 345.3866
+cat("\n\n")
+
+#BIAS
+bias = sum(error_forecast_actual[,1]-error_forecast_actual[,2]) * 1.0/length(error_forecast_actual[,2])
+cat('Bias %:', bias)
+```
+
+
+###### Checkout + Canceled Arrival Date
+```{r}
+#Actual and Forecast
+error_forecast_actual <- error_forecast_actualCanceled + error_forecast_actualCheckout
+
+#MAE
+cat("MAE:",mean(abs(error_forecast_actual[,2]-error_forecast_actual[,1])))#1 forecast, 2 actual.
+# [1] 345.3866
+cat("\n\n")
+
+#BIAS
+bias = sum(error_forecast_actual[,1]-error_forecast_actual[,2]) * 1.0/length(error_forecast_actual[,2])
+cat('Bias %:', bias)
+```
+
+###### Reservation Date Canceled
+```{r}
+#Actual and Forecast 
+error_forecast_actual <-  matrix(c(fReservation.ets$mean[1:cOmit],zReservationDateCanceled[(nObsCanceled-cOmit+1):nObsCanceled]),ncol=2)
+
+error_forecast_actualCanceledReservation <- error_forecast_actual
+
+#MAE
+cat("MAE:",mean(abs(error_forecast_actual[,2]-error_forecast_actual[,1])))#1 forecast, 2 actual.
+# [1] 345.3866
+cat("\n\n")
+
+#BIAS
+bias = sum(error_forecast_actual[,1]-error_forecast_actual[,2]) * 1.0/length(error_forecast_actual[,2])
+cat('Bias %:', bias)
+```
+
+###### Reservation Date Checkout
+```{r}
+#Actual and Forecast
+error_forecast_actual <-  matrix(c(fCheckoutReservation.ets$mean[1:cOmit],zReservationDateCheckout[(nObsCheckout-cOmit+1):nObsCheckout]),ncol=2)
+
+error_forecast_actualCheckoutReservation <- error_forecast_actual
+
+#MAE
+cat("MAE:",mean(abs(error_forecast_actual[,2]-error_forecast_actual[,1])))#1 forecast, 2 actual.
+# [1] 345.3866
+cat("\n\n")
+
+#BIAS
+bias = sum(error_forecast_actual[,1]-error_forecast_actual[,2]) * 1.0/length(error_forecast_actual[,2])
+cat('Bias %:', bias)
+```
+
+
+###### Checkout + Canceled Reservation Date
+```{r}
+#Actual and Forecast
+error_forecast_actual <- error_forecast_actualCanceledReservation + error_forecast_actualCheckoutReservation
+
+#MAE
+cat("MAE:",mean(abs(error_forecast_actual[,2]-error_forecast_actual[,1])))#1 forecast, 2 actual.
+# [1] 345.3866
+cat("\n\n")
+
+#BIAS
+bias = sum(error_forecast_actual[,1]-error_forecast_actual[,2]) * 1.0/length(error_forecast_actual[,2])
+cat('Bias %:', bias)
+```
+#### ARIMA
+#### TRAINING THE MODEL
+```{r}
+# fit1Arrival=auto.arima(oArrivalDateNumber,lambda = 0)
+fit1Arrival=auto.arima(oArrivalDateNumber, lambda = 0, start.p = 0, start.Q = 0, max.p = 10, max.q = 10, start.P = 0, start.q = 0,max.P = 10, max.Q = 10, max.d = 52, max.D = 52,seasonal = T)
+
+
+summary(fit1Arrival)
+#residual analysis
+ggtsdisplay(fit1Arrival$residuals)
+#box-Ljung Test, 3 porqué hemos estimado 3.
+Box.test(fit1Arrival$residuals,lag=1, fitdf=3, type="Lj")
+# Box.test(fit1Arrival$residuals,lag=8, fitdf=3, type="Lj")
+# Box.test(fit1Arrival$residuals,lag=12, fitdf=3, type="Lj")
+```
+
+```{r}
+fit1Reservation=auto.arima(oReservationDateNumber, lambda = 0, start.p = 0, start.Q = 0, max.p = 10, max.q = 10, start.P = 0, start.q = 0,max.P = 10, max.Q = 10, max.d = 52, max.D = 52,seasonal = T)
+
+summary(fit1Reservation)
+#residual analysis
+ggtsdisplay(fit1Reservation$residuals)
+#box-Ljung Test, 3 porqué hemos estimado 3.
+Box.test(fit1Reservation$residuals,lag=4, fitdf=3, type="Lj")
+Box.test(fit1Reservation$residuals,lag=8, fitdf=3, type="Lj")
+Box.test(fit1Reservation$residuals,lag=12, fitdf=3, type="Lj")
+```
+
+```{r}
+fit1Canceled=auto.arima(oArrivalDateCanceled, lambda = 0, start.p = 0, start.Q = 0, max.p = 10, max.q = 10, start.P = 0, start.q = 0,max.P = 10, max.Q = 10, max.d = 52, max.D = 52,seasonal = T)
+
+summary(fit1Canceled)
+#residual analysis
+ggtsdisplay(fit1Canceled$residuals)
+#box-Ljung Test, 3 porqué hemos estimado 3.
+Box.test(fit1Canceled$residuals,lag=4, fitdf=3, type="Lj")
+Box.test(fit1Canceled$residuals,lag=8, fitdf=3, type="Lj")
+Box.test(fit1Canceled$residuals,lag=12, fitdf=3, type="Lj")
+```
+
+```{r}
+fit1Checkout=auto.arima(oArrivalDateCheckout, lambda = 0, start.p = 0, start.Q = 0, max.p = 10, max.q = 10, start.P = 0, start.q = 0,max.P = 10, max.Q = 10, max.d = 52, max.D = 52,seasonal = T)
+
+summary(fit1Checkout)
+#residual analysis
+ggtsdisplay(fit1Checkout$residuals)
+#box-Ljung Test, 3 porqué hemos estimado 3.
+Box.test(fit1Checkout$residuals,lag=4, fitdf=3, type="Lj")
+Box.test(fit1Checkout$residuals,lag=8, fitdf=3, type="Lj")
+Box.test(fit1Checkout$residuals,lag=12, fitdf=3, type="Lj")
+```
+
+```{r}
+fit1CanceledReservation=auto.arima(oReservationDateCanceled, lambda = 0, start.p = 0, start.Q = 0, max.p = 10, max.q = 10, start.P = 0, start.q = 0,max.P = 10, max.Q = 10, max.d = 52, max.D = 52,seasonal = T)
+
+summary(fit1CanceledReservation)
+#residual analysis
+ggtsdisplay(fit1CanceledReservation$residuals)
+#box-Ljung Test, 3 porqué hemos estimado 3.
+Box.test(fit1CanceledReservation$residuals,lag=4, fitdf=3, type="Lj")
+Box.test(fit1CanceledReservation$residuals,lag=8, fitdf=3, type="Lj")
+Box.test(fit1CanceledReservation$residuals,lag=12, fitdf=3, type="Lj")
+```
+```{r}
+fit1CheckoutReservation=auto.arima(oReservationDateCheckout, lambda = 0, start.p = 0, start.Q = 0, max.p = 10, max.q = 10, start.P = 0, start.q = 0,max.P = 10, max.Q = 10, max.d = 52, max.D = 52,seasonal = T)
+
+summary(fit1CheckoutReservation)
+#residual analysis
+ggtsdisplay(fit1CheckoutReservation$residuals)
+#box-Ljung Test, 3 porqué hemos estimado 3.
+Box.test(fit1CheckoutReservation$residuals,lag=4, fitdf=3, type="Lj")
+Box.test(fit1CheckoutReservation$residuals,lag=8, fitdf=3, type="Lj")
+Box.test(fit1CheckoutReservation$residuals,lag=12, fitdf=3, type="Lj")
+```
+#### FORECAST
+```{r}
+fArrival.arima=forecast(fit1Arrival, h = 20)
+
+plot(fArrival.arima)
+lines(window(zArrivalDateNumber),type="o")
+
+
+res_ArimaMatrix <- matrix(c(fArrival.arima$mean[1:20],
+                            as.double(tail(zArrivalDateNumber,n=20))),
+                          ncol = 2)
+res_ArimaMatrix
+```
+
+```{r}
+fReservation.arima=forecast(fit1Reservation, h = 20)
+
+plot(fReservation.arima)
+lines(window(zReservationDateNumber),type="o")
+
+res_ArimaMatrix <- matrix(c(fReservation.arima$mean[1:20],
+                            as.double(tail(zReservationDateNumber,n=20))),
+                          ncol = 2)
+res_ArimaMatrix
+```
+
+```{r}
+fCanceled.arima=forecast(fit1Canceled, h = 20)
+
+plot(fCanceled.arima)
+lines(window(zArrivalDateCanceled),type="o")
+
+res_ArimaMatrix <- matrix(c(fCanceled.arima$mean[1:20],
+                            as.double(tail(zArrivalDateCanceled,n=20))),
+                          ncol = 2)
+res_ArimaMatrix
+```
+
+```{r}
+fCheckout.arima=forecast(fit1Checkout, h = 20)
+
+plot(fCheckout.arima)
+lines(window(zArrivalDateCheckout),type="o")
+
+res_ArimaMatrix <- matrix(c(fCheckout.arima$mean[1:20],
+                            as.double(tail(zArrivalDateCheckout,n=20))),
+                          ncol = 2)
+res_ArimaMatrix
+```
+
+```{r}
+fCanceled.arimaReservation=forecast(fit1CanceledReservation, h = 20)
+
+plot(fCanceled.arimaReservation)
+lines(window(zReservationDateCanceled),type="o")
+
+res_ArimaMatrix <- matrix(c(fCanceled.arimaReservation$mean[1:20],
+                            as.double(tail(zReservationDateCanceled,n=20))),
+                          ncol = 2)
+res_ArimaMatrix
+```
+
+```{r}
+fCheckout.arimaReservation=forecast(fit1CheckoutReservation, h = 20)
+
+plot(fCheckout.arimaReservation)
+lines(window(zReservationDateCheckout),type="o")
+
+res_ArimaMatrix <- matrix(c(fCheckout.arimaReservation$mean[1:20],
+                            as.double(tail(zReservationDateCheckout,n=20))),
+                          ncol = 2)
+res_ArimaMatrix
+```
+
+#### ERROR MEASUREMENTS
+##### Arrival
+```{r}
+error_forecast<- as.data.frame(fArrival.arima$mean[1:20])#forecast
+error_actual <- as.data.frame(tail(zArrivalDateNumber,n=20))#actual
+dim(error_actual)[1]
+error_actual_total <- error_actual
+
+#MAE
+cat("MAE:",mean(as.matrix(abs(error_forecast - error_actual))))#1 forecast, 2 actual.
+
+cat("\n\n")
+#BIAS
+bias = sum(as.matrix(error_forecast - error_actual)) * 1.0/dim(error_actual)[1]
+cat('Bias %:', bias)
+```
+##### Reservation
+```{r}
+error_forecast<- as.data.frame(fReservation.arima$mean[1:20])#forecast
+error_actual <- as.data.frame(tail(zReservationDateNumber,n=20))#actual
+dim(error_actual)[1]
+error_actual_total <- error_actual
+
+#MAE
+cat("MAE:",mean(as.matrix(abs(error_forecast - error_actual))))#1 forecast, 2 actual.
+
+cat("\n\n")
+#BIAS
+bias = sum(as.matrix(error_forecast - error_actual)) * 1.0/dim(error_actual)[1]
+cat('Bias %:', bias)
+```
+
+##### Canceled Arrival Date
+```{r}
+error_forecastCanceled<- as.data.frame(fCanceled.arima$mean[1:20])#forecast
+error_actualCanceled <- as.data.frame(tail(zArrivalDateCanceled,n=20))#actual
+dim(error_actualCanceled)[1]
+error_actual_total <- error_actualCanceled
+
+#MAE
+cat("MAE:",mean(as.matrix(abs(error_forecastCanceled - error_actualCanceled))))#1 forecast, 2 actual.
+
+cat("\n\n")
+#BIAS
+bias = sum(as.matrix(error_forecastCanceled - error_actualCanceled)) * 1.0/dim(error_actualCanceled)[1]
+cat('Bias %:', bias)
+```
+
+
+##### Checkout Arrival Date
+```{r}
+error_forecastCheckout<- as.data.frame(fCheckout.arima$mean[1:20])#forecast
+error_actualCheckout <- as.data.frame(tail(zArrivalDateCheckout,n=20))#actual
+dim(error_actualCheckout)[1]
+error_actual_total <- error_actualCheckout
+
+#MAE
+cat("MAE:",mean(as.matrix(abs(error_forecastCheckout - error_actualCheckout))))#1 forecast, 2 actual.
+
+cat("\n\n")
+#BIAS
+bias = sum(as.matrix(error_forecastCheckout - error_actualCheckout)) * 1.0/dim(error_actualCheckout)[1]
+cat('Bias %:', bias)
+```
+
+##### Checkout + Canceled Arrival Date
+```{r}
+error_forecast<- error_forecastCanceled + error_forecastCheckout
+error_actual <- error_actualCanceled + error_actualCheckout
+dim(error_actual)[1]
+error_actual_total <- error_actual
+
+#MAE
+cat("MAE:",mean(as.matrix(abs(error_forecast - error_actual))))#1 forecast, 2 actual.
+
+cat("\n\n")
+#BIAS
+bias = sum(as.matrix(error_forecast - error_actual)) * 1.0/dim(error_actual)[1]
+cat('Bias %:', bias)
+```
+
+
+##### Canceled Reservation Date
+```{r} 
+
+error_forecastCanceled<- as.data.frame(fCanceled.arimaReservation$mean[1:20])#forecast
+error_actualCanceled <- as.data.frame(tail(zReservationDateCanceled,n=20))#actual
+dim(error_actualCanceled)[1]
+error_actual_total <- error_actualCanceled
+
+#MAE
+cat("MAE:",mean(as.matrix(abs(error_forecastCanceled - error_actualCanceled))))#1 forecast, 2 actual.
+
+cat("\n\n")
+#BIAS
+bias = sum(as.matrix(error_forecastCanceled - error_actualCanceled)) * 1.0/dim(error_actualCanceled)[1]
+cat('Bias %:', bias)
+```
+
+
+##### Checkout Reservation Date
+```{r}
+error_forecastCheckout<-  as.data.frame(fCheckout.arimaReservation$mean[1:20])#forecast
+error_actualCheckout <- as.data.frame(tail(zReservationDateCheckout,n=20))#actual
+dim(error_actualCheckout)[1]
+error_actual_total <- error_actualCheckout
+
+#MAE
+cat("MAE:",mean(as.matrix(abs(error_forecastCheckout - error_actualCheckout))))#1 forecast, 2 actual.
+
+cat("\n\n")
+#BIAS
+bias = sum(as.matrix(error_forecastCheckout - error_actualCheckout)) * 1.0/dim(error_actualCheckout)[1]
+cat('Bias %:', bias)
+```
+
+##### Checkout + Canceled Reservation Date
+```{r}
+error_forecast<- error_forecastCanceled + error_forecastCheckout
+error_actual <- error_actualCanceled + error_actualCheckout
+dim(error_actual)[1]
+error_actual_total <- error_actual
+
+#MAE
+cat("MAE:",mean(as.matrix(abs(error_forecast - error_actual))))#1 forecast, 2 actual.
+
+cat("\n\n")
+#BIAS
+bias = sum(as.matrix(error_forecast - error_actual)) * 1.0/dim(error_actual)[1]
+cat('Bias %:', bias)
+```
+
+
+#### FINAL PREDICTION
+
+
+##### TRAINING THE MODEL
+```{r}
+etsfitArrivalCanceled<-ets(zArrivalDateCanceled[-length(zArrivalDateCanceled)], lambda = "auto", use.initial.values = TRUE, nmse = 30)
+etsfitArrivalCheckout<-ets(zArrivalDateCheckout[-length(zArrivalDateCheckout)], lambda = "auto", use.initial.values = TRUE, nmse = 30)
+
+
+fit1Reservation=auto.arima(zReservationDateNumber, lambda = 0, start.p = 0, start.Q = 0, max.p = 10, max.q = 10, start.P = 0, start.q = 0,max.P = 10, max.Q = 10, max.d = 52, max.D = 52,seasonal = T)
+
+```
+
+
+##### FORECAST
+```{r}
+#forecast model
+fCanceled.ets=forecast(etsfitArrivalCanceled, h = 20)
+fCheckout.ets=forecast(etsfitArrivalCheckout, h = 20)
+```
+
+```{r}
+plot(fCanceled.ets$mean + fCheckout.ets$mean, xlim = c(0,150), ylim = c(100, 600), main = 'Final Prediction', ylab = 'Number of Reservations for Arrival Date')
+lines(window(zArrivalDateNumber[-length(zArrivalDateNumber)]),type="o")
+```
+
+
+```{r}
+fReservation.arima=forecast(fit1Reservation, h = 20)
+
+plot(fReservation.arima)
+lines(window(zReservationDateNumber),type="o")
+
+res_ArimaMatrix <- matrix(c(fReservation.arima$mean[1:20],
+                            as.double(tail(zReservationDateNumber,n=20))),
+                          ncol = 2)
+res_ArimaMatrix
+```

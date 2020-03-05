@@ -1,0 +1,22 @@
+"0","```r
+raw_data<-read_csv(\"H1.csv\")
+```"
+"1","Parsed with column specification:
+cols(
+  .default = col_double(),
+  ArrivalDateMonth = [31mcol_character()[39m,
+  Meal = [31mcol_character()[39m,
+  Country = [31mcol_character()[39m,
+  MarketSegment = [31mcol_character()[39m,
+  DistributionChannel = [31mcol_character()[39m,
+  ReservedRoomType = [31mcol_character()[39m,
+  AssignedRoomType = [31mcol_character()[39m,
+  DepositType = [31mcol_character()[39m,
+  Agent = [31mcol_character()[39m,
+  Company = [31mcol_character()[39m,
+  CustomerType = [31mcol_character()[39m,
+  ReservationStatus = [31mcol_character()[39m,
+  ReservationStatusDate = [34mcol_date(format = \"\")[39m
+)
+See spec(...) for full column specifications.
+"

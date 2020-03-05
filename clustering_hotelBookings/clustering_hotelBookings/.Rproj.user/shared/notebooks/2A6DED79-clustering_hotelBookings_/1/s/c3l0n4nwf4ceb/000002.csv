@@ -1,0 +1,15 @@
+"0","```r
+unique(raw_data$IsCanceled[raw_data$ReservationStatus == 'Check-Out'])
+```"
+"1","[1] 0
+"
+"0","```r
+unique(raw_data$IsCanceled[raw_data$ReservationStatus == 'No-Show'])
+```"
+"1","[1] 1
+"
+"0","```r
+unique(raw_data$IsCanceled[raw_data$ReservationStatus == 'Canceled'])
+```"
+"1","[1] 1
+"

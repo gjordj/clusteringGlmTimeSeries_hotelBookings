@@ -1,0 +1,6 @@
+"0","```r
+bondad_ac = get_clust_tendency(predictiveVariables_sample, 500)
+bondad_ac$hopkins_stat
+```"
+"1","[1] 0.06892939
+"

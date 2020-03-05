@@ -1,0 +1,6 @@
+"0","```r
+target <- as.data.frame(raw_data_encoded_sample %>%group_by(IsCanceled)%>%summarise(counts = n()))%>%mutate(perc = counts/nrow(raw_data_encoded_sample))
+
+ggplot(target, aes(x = IsCanceled, y = perc)) + geom_bar(stat = \"identity\")+
+  geom_text(aes(label = round(perc,2)))
+```"

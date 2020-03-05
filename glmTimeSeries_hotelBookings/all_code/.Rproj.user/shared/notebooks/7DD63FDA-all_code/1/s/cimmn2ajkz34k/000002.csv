@@ -1,0 +1,6 @@
+"0","etsfitArrivalCanceled<-ets(zArrivalDateCanceled[-length(zArrivalDateCanceled)], lambda = ""auto"", use.initial.values = TRUE, nmse = 30)"
+"0","etsfitArrivalCheckout<-ets(zArrivalDateCheckout[-length(zArrivalDateCheckout)], lambda = ""auto"", use.initial.values = TRUE, nmse = 30)"
+"0",""
+"0",""
+"0","fit1Reservation=auto.arima(zReservationDateNumber, lambda = 0, start.p = 0, start.Q = 0, max.p = 10, max.q = 10, start.P = 0, start.q = 0,max.P = 10, max.Q = 10, max.d = 52, max.D = 52,seasonal = T)"
+"0",""

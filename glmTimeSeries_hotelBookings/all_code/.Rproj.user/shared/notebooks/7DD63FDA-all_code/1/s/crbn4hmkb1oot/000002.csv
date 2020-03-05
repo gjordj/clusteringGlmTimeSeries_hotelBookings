@@ -1,0 +1,6 @@
+"0","####################################################################"
+"0","# ODDS OF DEFAULT BASED ON WEIGHTS(COEFFICIENTS) GIVEN TO VARIABLES#"
+"0","####################################################################"
+"0","# How odds of default change by changing one unit of the variable. "
+"0","temp_compare <- as.data.frame(exp(cbind(OR = coef(df.glm1))))"
+"0","temp_compare"

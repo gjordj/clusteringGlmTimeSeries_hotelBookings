@@ -1,0 +1,3 @@
+"0","fCheckout.arima=forecast(fit1Checkout, h = 20)"
+"0",""
+"0","plot(fCheckout.arima)"

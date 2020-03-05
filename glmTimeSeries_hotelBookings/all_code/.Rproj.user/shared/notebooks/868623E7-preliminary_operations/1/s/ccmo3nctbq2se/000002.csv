@@ -1,0 +1,7 @@
+"0","#Get the AUC"
+"0","unlist(slot(performance(pred, ""auc""), ""y.values""))"
+"1","[1]"
+"1"," 0.9110479"
+"1","
+"
+"0","# "

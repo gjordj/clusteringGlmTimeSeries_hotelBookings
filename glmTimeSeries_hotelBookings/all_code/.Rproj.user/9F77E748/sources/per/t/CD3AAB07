@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1579415479727.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "691036266",
+    "id" : "CD3AAB07",
+    "lastKnownWriteTime" : 1579769731,
+    "last_content_update" : 1579769732036,
+    "path" : "~/Google Drive/DATA SCIENCE-TRADING/1_CUNEF/Clustering and dimensionality reduction/Exam_2020/all_code/all_code.Rmd",
+    "project_path" : "all_code.Rmd",
+    "properties" : {
+        "chunk_output_type" : "inline",
+        "cursorPosition" : "1462,93",
+        "docOutlineSize" : "134.94239025017293",
+        "docOutlineVisible" : "1",
+        "scrollLine" : "1423",
+        "tempName" : "Untitled2"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

@@ -1,0 +1,8 @@
+"0","```r
+clus.nb = NbClust(predictiveVariablesNonZeroScaled, distance = \"euclidean\",min.nc = 2, max.nc = 10,method = \"complete\", index =\"gap\")
+
+clus.nb$Best.nc
+```"
+"1","Number_clusters     Value_Index 
+         2.0000          1.8945 
+"

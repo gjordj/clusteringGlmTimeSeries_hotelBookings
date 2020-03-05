@@ -1,0 +1,8 @@
+"0","weekly$rn <- as.Date(weekly$rn)"
+"0","reservationDatePlot <- weekly"
+"0","ggplot(data = weekly,"
+"0","      aes(x = rn))+"
+"0","      geom_line(aes(y = V1, color = ""Number of Reservations for Reservation Date""))+"
+"0","      ylab('Number of Reservations for that Reservation Date')+"
+"0","      xlab('Date - Weekly')+"
+"0","      theme(legend.position = ""none"")"

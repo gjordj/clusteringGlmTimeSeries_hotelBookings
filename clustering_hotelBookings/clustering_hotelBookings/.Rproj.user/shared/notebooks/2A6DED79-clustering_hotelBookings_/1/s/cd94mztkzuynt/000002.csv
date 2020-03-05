@@ -1,0 +1,17 @@
+"0","```r
+test.ind = chisq.test(roomChannel)
+```"
+"1","Chi-squared approximation may be incorrect
+"
+"0","```r
+test.ind
+```"
+"1","
+	Pearson's Chi-squared test
+
+data:  roomChannel
+X-squared = 2800, df = 27, p-value < 2.2e-16
+"
+"0","```r
+# The result of the test confirms the possibility of rejecting the hypotheses of independence between categories of rows and columns, or, what is the same, we can affirm that there is a relationship between them. The rest of the tests presented below allow us to help visualize and interpret the test result.
+```"

@@ -1,0 +1,1 @@
+"0","mtext(paste('Logistic Regression - auc : ', round(rocr.auc.lr, 5)))"

@@ -1,0 +1,5 @@
+"0","#Log transformation?"
+"0","zlReservationDateCheckout=log(zReservationDateCheckout)"
+"0","df_newl <- data.frame(value = as.vector(zReservationDateCheckout),"
+"0","                     time = time(zReservationDateCheckout))"
+"0","ggplot(df_newl)+geom_point(aes(x=time,y=value))+geom_line(aes(x=time,y=value))+ylab(""Mean ADR "")+ggtitle(""Mean ADR for Arrival Date  LOG "")+xlab(""Date - Weeks"")"

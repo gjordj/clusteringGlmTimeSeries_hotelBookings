@@ -1,0 +1,4 @@
+"0",""
+"0","set.seed(123)"
+"0","quiebras.eclust.j = eclust(predictiveVariables_sample, ""hclust"", k=2)"
+"0","fviz_dend(quiebras.eclust.j, rect = TRUE)"

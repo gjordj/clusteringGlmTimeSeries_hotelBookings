@@ -1,0 +1,6 @@
+"0","```r
+#Predictive Variables: all of them except:
+  # - IsCanceled (Target Variable) and ArrivalDateYear.
+# We erase ArrivalDateYear because we won't our models to be time replicable.
+predictiveVariables_sample = raw_data_encoded_sample[,c(-1,-3)]
+```"

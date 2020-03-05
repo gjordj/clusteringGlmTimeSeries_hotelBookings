@@ -1,0 +1,24 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583403244126.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "CB97BA4B",
+    "lastKnownWriteTime" : 1583403243,
+    "last_content_update" : 1583403243,
+    "path" : "~/Google Drive/DATA SCIENCE-TRADING/0_github/EDA_Clustering_DimRed/Clustering_Dimension_R/clustering_hotelBookings_.Rmd",
+    "project_path" : "clustering_hotelBookings_.Rmd",
+    "properties" : {
+        "chunk_output_type" : "inline"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

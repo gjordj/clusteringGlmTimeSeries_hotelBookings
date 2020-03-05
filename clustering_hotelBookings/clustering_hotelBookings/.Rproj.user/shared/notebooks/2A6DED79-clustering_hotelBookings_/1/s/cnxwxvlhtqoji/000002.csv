@@ -1,0 +1,4 @@
+"0","```r
+library(FactoMineR)
+countryRoom.ca=CA(countryRoom, graph = FALSE)
+```"

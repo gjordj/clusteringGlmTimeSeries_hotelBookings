@@ -1,0 +1,3 @@
+"0","  "
+"0","   #Seasonal Plot"
+"0","  ggfreqplot(as.ts(zReservationDateCheckout),freq=4,nrow=1,facet.labeller=c(""1T"",""2T"",""3T"",""4T""))+ggtitle(""Mean ADR  - Arrival Date "")"

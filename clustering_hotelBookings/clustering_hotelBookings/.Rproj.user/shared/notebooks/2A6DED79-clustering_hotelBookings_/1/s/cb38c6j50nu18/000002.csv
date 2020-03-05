@@ -1,0 +1,15 @@
+"0","```r
+# Calculate silhouette width for many k using PAM
+sil_width <- c(NA)
+for(i in 2:10){
+  pam_fit <- pam(gower_dist,
+                 diss = TRUE,
+                 k = i)
+  sil_width[i] <- pam_fit$silinfo$avg.width
+}
+# Plot sihouette width (higher is better)
+plot(1:10, sil_width,
+     xlab = \"Optimal k clusters\",
+     ylab = \"Average Width Profile\")
+lines(1:10, sil_width)
+```"

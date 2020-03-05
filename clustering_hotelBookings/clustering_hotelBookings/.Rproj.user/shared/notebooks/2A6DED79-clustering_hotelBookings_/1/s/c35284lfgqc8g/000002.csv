@@ -1,0 +1,8 @@
+"0","```r
+# Agent
+raw_data_encoded$Agent <- ifelse(raw_data_encoded$Agent == \"NULL\", 0,raw_data_encoded$Agent)
+raw_data_encoded$Agent <- as.numeric(raw_data_encoded$Agent)
+# Company
+raw_data_encoded$Company <- ifelse(raw_data_encoded$Company == \"NULL\", 0,raw_data_encoded$Company)
+raw_data_encoded$Company <- as.numeric(raw_data_encoded$Company)
+```"

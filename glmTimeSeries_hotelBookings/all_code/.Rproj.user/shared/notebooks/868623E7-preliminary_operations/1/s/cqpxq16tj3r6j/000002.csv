@@ -1,0 +1,6 @@
+"0","## Train"
+"0","datos_train_x <- model.matrix(IsCanceled ~ ., df.train)[, -1]"
+"0","datos_train_y <- df.train$IsCanceled"
+"0","## test"
+"0","datos_test_x <- model.matrix(IsCanceled ~ ., df.test)[, -1]"
+"0","datos_test_y <- df.test$IsCanceled"

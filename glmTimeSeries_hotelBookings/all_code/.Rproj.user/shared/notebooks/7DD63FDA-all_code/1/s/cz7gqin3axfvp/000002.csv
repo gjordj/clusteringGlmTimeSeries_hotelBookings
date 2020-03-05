@@ -1,0 +1,3 @@
+"0","target <- as.data.frame(df.train %>% group_by(IsCanceled) %>% summarise(counts = n())) %>% mutate(perc = counts/nrow(df.train))"
+"0","ggplot(target, aes(x = IsCanceled, y = perc)) + geom_bar(stat = ""identity"") +"
+"0","  geom_text(aes(label = round(perc,2)))"

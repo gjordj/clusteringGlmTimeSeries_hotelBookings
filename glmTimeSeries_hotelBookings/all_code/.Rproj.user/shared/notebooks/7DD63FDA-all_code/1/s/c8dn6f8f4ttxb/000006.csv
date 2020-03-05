@@ -1,0 +1,3 @@
+"0","fCanceled.arimaReservation=forecast(fit1CanceledReservation, h = 20)"
+"0",""
+"0","plot(fCanceled.arimaReservation)"

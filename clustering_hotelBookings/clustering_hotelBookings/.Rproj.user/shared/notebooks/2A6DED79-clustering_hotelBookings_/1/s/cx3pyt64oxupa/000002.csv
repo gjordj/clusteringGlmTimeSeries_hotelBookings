@@ -1,0 +1,10 @@
+"0","```r
+claraC2$clustering <- as.factor(claraC2$clustering)
+tabl = prop.table(table(claraC2$clustering,isCanceled_sample))*100
+tabl
+```"
+"1","   isCanceled_sample
+       0    1
+  1 49.5 15.2
+  2 21.9 13.4
+"

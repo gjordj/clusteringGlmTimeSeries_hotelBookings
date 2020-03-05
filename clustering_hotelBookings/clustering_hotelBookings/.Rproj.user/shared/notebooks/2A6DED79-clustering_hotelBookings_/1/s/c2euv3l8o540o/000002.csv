@@ -1,0 +1,7 @@
+"0","```r
+grp <- cutree(aggl.clust.c, k = 2)
+# aggl.clust.c <- hclust(gower_dist, method = \"complete\") 
+sil_cl <- silhouette(grp,gower_dist, title=title(main = 'Good'))
+# rownames(sil_cl) <- rownames(grp)
+plot(sil_cl)
+```"

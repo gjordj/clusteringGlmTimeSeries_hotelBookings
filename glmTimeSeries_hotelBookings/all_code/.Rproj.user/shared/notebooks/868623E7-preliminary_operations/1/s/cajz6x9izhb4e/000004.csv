@@ -1,0 +1,8 @@
+"0","############"
+"0","# ROC CURVE#####################################################################################################"
+"0","############"
+"0","pred <- prediction(prob.Lasso, df.test$IsCanceled)"
+"0","perf <- performance(pred, ""tpr"", ""fpr"")"
+"0","rocr.auc.lr = as.numeric(performance(pred, ""auc"")@y.values)"
+"0","plot(perf, colorize = TRUE,"
+"0","      main = 'ROC Curve')"

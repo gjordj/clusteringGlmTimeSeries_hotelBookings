@@ -1,0 +1,4 @@
+"0","```r
+roomChannel = as.data.frame.matrix(table(raw_data$DistributionChannel, raw_data$ReservedRoomType))
+roomChannel
+```"

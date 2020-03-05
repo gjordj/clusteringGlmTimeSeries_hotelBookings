@@ -1,0 +1,12 @@
+"0","```r
+library(Rtsne)
+pam_fit <- pam(gower_dist, diss = TRUE, k = 4)
+
+tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
+tsne_data <- tsne_obj$Y %>%
+  data.frame() %>%
+  setNames(c(\"X\", \"Y\")) %>%
+  mutate(cluster = factor(pam_fit$clustering))
+ggplot(aes(x = X, y = Y), data = tsne_data) +
+  geom_point(aes(color = cluster))
+```"

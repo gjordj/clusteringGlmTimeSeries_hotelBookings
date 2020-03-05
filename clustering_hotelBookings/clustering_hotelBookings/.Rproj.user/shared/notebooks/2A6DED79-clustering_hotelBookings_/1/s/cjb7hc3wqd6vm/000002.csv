@@ -1,0 +1,5 @@
+"0","```r
+set.seed(123)
+#Encoded data sample
+raw_data_encoded_sample = sample_n(raw_data_encoded, size = 1000)
+```"

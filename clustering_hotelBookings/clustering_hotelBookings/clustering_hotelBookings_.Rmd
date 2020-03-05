@@ -1,0 +1,641 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# AUTHOR: JORDI TARROCH MEJÓN
+
+El archivo H1 consta de 40.060 observaciones efectuadas sobre 31 variables en un hotel de
+vacaciones (resort), tal y como se describe en Antonio, Almeida y Nunes (2019). Su trabajo de
+cara a la evaluación de la asignatura consistirá en elaborar tres documentos con las
+características siguientes.
+
+El primero, común a esta asignatura y a la del Prof. López Zafra, consistirá en:
+- Describir las operaciones de limpieza y transformación de los datos de cara a la consolidación de los mismos para su posterior aplicación a cada uno de los trabajos específicos que deberá realizar en cada asignatura.
+
+Este documento, “Operaciones preliminares”, tendrá la estructura de un paper:
+- título (el señalado)
+- abstract
+- introducción y objetivos del trabajo a realizar
+- operaciones comunes para las dos asignaturas: EDA
+- operaciones específicas correspondientes a Agrupación
+- operaciones específicas correspondientes a Predicción
+- conclusiones
+- referencias bibliográficas.
+
+ORIENTACIÓN en la estructura de Antonio, Almeida y Nunes (2019). No debe
+reproducir ninguna información que se encuentre en el citado paper, como, por ejemplo, la
+descripción del archivo y las variables. La extensión máxima de este documento será de 10 pp.
+
+# LIBRARIES
+```{r}
+##############
+#LIBRARIES####
+##############
+library(readr)
+library(skimr)# Beautiful Summarize
+library(cleandata)# ordinal encoding
+library(onehot)# nominal encoding
+
+library(ggplot2)
+library(ggpubr)
+library(easyGgplot2)
+library(forcats)
+
+library(PerformanceAnalytics) # Correlations
+library(corrplot)
+library(dplyr) # select
+
+library(factoextra)
+library(FactoMineR)
+library("NbClust")
+library(cluster)
+
+library(zoo)
+library(ggfortify)
+require(forecast)
+```
+
+```{r}
+raw_data<-read_csv("H1.csv")
+```
+# TARGET VARIABLE
+- IsCanceled
+- ReservationStatus is almost the same as IsCanceled:
+  - No-Show is a type of Canceled booking.
+```{r}
+unique(raw_data$IsCanceled[raw_data$ReservationStatus == 'Check-Out'])
+unique(raw_data$IsCanceled[raw_data$ReservationStatus == 'No-Show'])
+unique(raw_data$IsCanceled[raw_data$ReservationStatus == 'Canceled'])
+```
+
+# DATA WRANGLING
+
+## ENCODING CATEGORICAL VARIABLES
+
+### ORDINAL ENCODING
+- ArrivalDateMonth
+
+```{r}
+raw_data_encoded = raw_data
+# ORDINAL ENCODING
+#ArrivalDateMonth
+levels <- c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December')
+raw_data_encoded$ArrivalDateMonth = factor(raw_data_encoded$ArrivalDateMonth, order = TRUE , levels)
+x <- as.data.frame(raw_data_encoded$ArrivalDateMonth)
+raw_data_encoded$ArrivalDateMonth <- encode_ordinal( x, levels, none='', out.int=FALSE,
+               full_print=TRUE)
+raw_data_encoded$ArrivalDateMonth <- as.numeric(unlist(raw_data_encoded$ArrivalDateMonth))
+
+print(dim(raw_data_encoded))
+```
+
+###  NOMINAL ENCODING - ONEHOT ENCODING
+- ReservedRoomType
+- AssignedRoomType
+- Meal
+- Country
+- MarketSegment
+- DistributionChannel
+- DepositType
+- CustomerType
+
+
+```{r}
+# NOMINAL ENCODING - ONEHOT ENCODING
+
+# https://github.com/Zelazny7/onehot
+# ReservedRoomType
+ReservedRoomType <- as.data.frame(raw_data_encoded$ReservedRoomType)
+encoder <- onehot(ReservedRoomType, max_levels = 15, add_NA_factors = FALSE)
+ReservedRoomType_onehot<- predict(encoder, ReservedRoomType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, ReservedRoomType_onehot)
+print(dim(raw_data_encoded))
+
+# AssignedRoomType
+AssignedRoomType <- as.data.frame(raw_data_encoded$AssignedRoomType)
+encoder <- onehot(AssignedRoomType, max_levels = 15, add_NA_factors = FALSE)
+AssignedRoomType_onehot<- predict(encoder, AssignedRoomType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, AssignedRoomType_onehot)
+print(dim(raw_data_encoded))
+
+# Meal
+Meal <- as.data.frame(raw_data_encoded$Meal)
+encoder <- onehot(Meal, max_levels = 15, add_NA_factors = FALSE)
+Meal_onehot<- predict(encoder, Meal, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, Meal_onehot)
+print(dim(raw_data_encoded))
+
+# Country
+Country <- as.data.frame(raw_data_encoded$Country)
+encoder <- onehot(Country, max_levels = 130, add_NA_factors = FALSE)
+Country_onehot<- predict(encoder, Country, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, Country_onehot)
+print(dim(raw_data_encoded))
+
+# MarketSegment
+MarketSegment <- as.data.frame(raw_data_encoded$MarketSegment)
+encoder <- onehot(MarketSegment, max_levels = 15, add_NA_factors = FALSE)
+MarketSegment_onehot<- predict(encoder, MarketSegment, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, MarketSegment_onehot)
+
+# DistributionChannel
+DistributionChannel <- as.data.frame(raw_data_encoded$DistributionChannel)
+encoder <- onehot(DistributionChannel, max_levels = 15, add_NA_factors = FALSE)
+DistributionChannel_onehot<- predict(encoder, DistributionChannel, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, DistributionChannel_onehot)
+
+
+# DepositType
+DepositType <- as.data.frame(raw_data_encoded$DepositType)
+encoder <- onehot(DepositType, max_levels = 15, add_NA_factors = FALSE)
+DepositType_onehot<- predict(encoder, DepositType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, DepositType_onehot)
+
+
+# CustomerType
+CustomerType <- as.data.frame(raw_data_encoded$CustomerType)
+encoder <- onehot(CustomerType, max_levels = 15, add_NA_factors = FALSE)
+CustomerType_onehot<- predict(encoder, CustomerType, stringsAsFactors=TRUE)
+raw_data_encoded <- cbind(raw_data_encoded, CustomerType_onehot)
+
+```
+
+### NULL to NUMERIC 
+- Agent
+- Company
+
+```{r}
+# Agent
+raw_data_encoded$Agent <- ifelse(raw_data_encoded$Agent == "NULL", 0,raw_data_encoded$Agent)
+raw_data_encoded$Agent <- as.numeric(raw_data_encoded$Agent)
+# Company
+raw_data_encoded$Company <- ifelse(raw_data_encoded$Company == "NULL", 0,raw_data_encoded$Company)
+raw_data_encoded$Company <- as.numeric(raw_data_encoded$Company)
+```
+
+#### AGENT YES
+```{r}
+raw_data_encoded$AgentYes <- ifelse(raw_data_encoded$Agent == 0, 0, 1)
+```
+
+#### COMPANY YES
+```{r}
+raw_data_encoded$CompanyYes <- ifelse(raw_data_encoded$Company == 0, 0, 1)
+```
+
+## PRE-ENCODED AND COMMON SENSE COLUMNS DELETION
+```{r}
+timeSeriesDataSet = raw_data_encoded
+# ERASE ENCODED VARIABLES
+erase_columns <- c(12, 13, 14, 15, 19, 20, 22, 26)
+erase_columns # number of the position of the columns to erase
+raw_data_encoded <- raw_data_encoded[ -erase_columns ]
+
+# COMMON SENSE DELETION: Based on how we define the Target Variable
+# ReservationStatus and Date
+raw_data_encoded <- raw_data_encoded[ -c(22,23) ]
+```
+
+
+## SAMPLING
+```{r}
+set.seed(123)
+#Encoded data sample
+raw_data_encoded_sample = sample_n(raw_data_encoded, size = 1000)
+```
+
+
+### TARGET VARIABLE
+```{r}
+#isCanceled
+isCanceled_sample = raw_data_encoded_sample[,1]
+```
+```{r}
+target <- as.data.frame(raw_data_encoded_sample %>%group_by(IsCanceled)%>%summarise(counts = n()))%>%mutate(perc = counts/nrow(raw_data_encoded_sample))
+
+ggplot(target, aes(x = IsCanceled, y = perc)) + geom_bar(stat = "identity")+
+  geom_text(aes(label = round(perc,2)))
+```
+### PREDICTIVE VARIABLES
+```{r}
+#Predictive Variables: all of them except:
+  # - IsCanceled (Target Variable) and ArrivalDateYear.
+# We erase ArrivalDateYear because we won't our models to be time replicable.
+predictiveVariables_sample = raw_data_encoded_sample[,c(-1,-3)]
+```
+
+## PREDICTION DATASET
+```{r}
+raw_data_prediction <- raw_data_encoded[-3]
+
+# raw_data_prediction_sample <- raw_data_encoded_sample[-3]
+# raw_data_prediction_sample = raw_data_prediction_sample[!sapply(raw_data_prediction_sample, function(x) sum(x)== 0)]
+```
+
+# CLUSTERING
+Clustering:
+- Goodness of the cluster Analysis
+- Optimal Number of Clusters
+ Clustering
+
+
+## DATA PRE-PROCESSING
+### SCALING
+```{r}
+#Scaled sample
+predictiveVariables_sampleScaled = scale(predictiveVariables_sample)
+predictiveVariables_sampleScaled = as.data.frame(predictiveVariables_sampleScaled)
+```
+
+### VARIABLES WITH ZERO VALUES IN ALL COLUMNS
+```{r}
+#Columns with all zeros from the sample
+predictiveVariablesNonZero = predictiveVariables_sample[!sapply(predictiveVariables_sample, function(x) sum(x)== 0)]
+predictiveVariablesNonZeroScaled = scale(predictiveVariablesNonZero)
+```
+
+### GOWER
+```{r}
+library(cluster)
+gower_dist = daisy(as.matrix(predictiveVariables_sample) , metric = "euclidean", stand = FALSE)
+
+```
+
+
+## GOODNESS OF THE CLUSTER ANALYSIS
+```{r}
+bondad_ac = get_clust_tendency(predictiveVariables_sample, 500)
+bondad_ac$hopkins_stat
+```
+
+## OPTIMAL NUMBER OF CLUSTERS
+
+### NUMBER FOR NON HIERARCHICAL CLUSTERING
+
+#### GENERAL FOR ALL OF THEM
+```{r}
+clus.nb = NbClust(predictiveVariablesNonZeroScaled, distance = "euclidean",min.nc = 2, max.nc = 10,method = "complete", index ="gap")
+
+clus.nb$Best.nc
+```
+
+
+#### PAM
+
+```{r}
+# Calculate silhouette width for many k using PAM
+sil_width <- c(NA)
+for(i in 2:10){
+  pam_fit <- pam(gower_dist,
+                 diss = TRUE,
+                 k = i)
+  sil_width[i] <- pam_fit$silinfo$avg.width
+}
+# Plot sihouette width (higher is better)
+plot(1:10, sil_width,
+     xlab = "Optimal k clusters",
+     ylab = "Average Width Profile")
+lines(1:10, sil_width)
+```
+
+
+#### CLARA
+
+
+```{r}
+# Only numeric Variables for clustering
+numericVariables <- predictiveVariablesNonZero[c(17,7,2,3,9,13,8,16,1,12,11,18,5,6,19)]
+```
+
+```{r}
+fviz_nbclust(numericVariables, cluster::clara, method = "silhouette") + ggtitle("Optimal number of clusters - CLARA") + labs(x = "Optimal k clusters", y = "Average Width Profile")
+# 2 groups
+```
+The optimal number of clusters will be given by the value of k that maximizes the average profile. In this case: 2
+
+
+#### FUZZY ANALYSIS CLUSTERING
+
+
+```{r}
+# Calculate silhouette width for many k using 
+sil_width <- c(NA)
+for(i in 2:10){
+ fanny_fit <- fanny(gower_dist,
+                 diss = TRUE,
+                 k = i)
+  sil_width[i] <- fanny_fit$silinfo$avg.width
+}
+# Plot sihouette width (higher is better)
+plot(1:10, sil_width,
+     xlab = "Number of clusters",
+     ylab = "Silhouette Width")
+lines(1:10, sil_width)
+```
+
+### NUMBER FOR HIERARCHICAL CLUSTERING
+
+#### HCUT
+```{r}
+aggl.clust.c <- hclust(gower_dist, method = "complete") 
+
+
+library(fpc)
+cstats.table <- function(dist, tree, k) {
+  clust.assess <- c("cluster.number","n","within.cluster.ss","average.within","average.between","wb.ratio","dunn2","avg.silwidth")
+  clust.size <- c("cluster.size")
+  stats.names <- c()
+  row.clust <- c()
+  output.stats <- matrix(ncol = k, nrow = length(clust.assess))
+  cluster.sizes <- matrix(ncol = k, nrow = k)
+  for (i in c(1:k)) {
+    row.clust[i] <- paste("Cluster-", i, " size")
+  }
+  for (i in c(2:k)) {
+    stats.names[i] <- paste("Test", i - 1)
+    
+    for (j in seq_along(clust.assess)) {
+      output.stats[j, i] <- unlist(cluster.stats(d = dist, clustering = cutree(tree, k = i))[clust.assess])[j]
+      
+    }
+    
+    for (d in 1:k) {
+      cluster.sizes[d, i] <- unlist(cluster.stats(d = dist, clustering = cutree(tree, k = i))[clust.size])[d]
+      dim(cluster.sizes[d, i]) <- c(length(cluster.sizes[i]), 1)
+      cluster.sizes[d, i]
+      
+    }
+  }
+  output.stats.df <- data.frame(output.stats)
+  cluster.sizes <- data.frame(cluster.sizes)
+  cluster.sizes[is.na(cluster.sizes)] <- 0
+  rows.all <- c(clust.assess, row.clust)
+  
+  # rownames(output.stats.df) <- clust.assess
+  output <- rbind(output.stats.df, cluster.sizes)[ ,-1]
+  colnames(output) <- stats.names[2:k]
+  rownames(output) <- rows.all
+  is.num <- sapply(output, is.numeric)
+  output[is.num] <- lapply(output[is.num], round, 2)
+  output
+}
+```
+
+```{r}
+ggplot(data = data.frame(t(cstats.table(gower_dist, aggl.clust.c, 15))), 
+       aes(x = cluster.number, y = avg.silwidth)) +
+  geom_point() +
+  geom_line() +
+  ggtitle("Optimal number of clusters - HCUT") +
+  labs(x = "Optimal k clusters", y = "Average Width Profile") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+## HIERARCHICAL CLUSTERING
+
+###  DENDROGRAM
+
+```{r}
+plot(aggl.clust.c, main = "HCUT ")
+rect.hclust(aggl.clust.c, k = 2, border = 2:3)
+```
+
+### CLUSTER PLOT
+```{r}
+set.seed(123)
+grp <- cutree(aggl.clust.c, k = 2)
+fviz_cluster(list(data = predictiveVariables_sample, cluster = grp), stand = FALSE, geom = "point", pointsize = 1, title = "Cluster Plot")
+
+```
+
+### CONTINGENCY TABLE
+```{r}
+
+clust.num <- cutree(aggl.clust.c, k = 2)
+tabl = prop.table(table(clust.num,isCanceled_sample))*100
+tabl
+```
+```{r}
+tabl[1,2]/(tabl[1]+ tabl[1,2])*100 # % of Cancelations of Group 1
+tabl[2,2]/(tabl[2]+tabl[2,2])*100 # % of Cancelations of Group 2
+```
+
+
+
+### SILHOUETTE PLOT
+
+
+```{r}
+grp <- cutree(aggl.clust.c, k = 2)
+# aggl.clust.c <- hclust(gower_dist, method = "complete") 
+sil_cl <- silhouette(grp,gower_dist, title=title(main = 'Good'))
+# rownames(sil_cl) <- rownames(grp)
+plot(sil_cl)
+```
+
+
+## NON- HIERARCHICAL CLUSTERING
+
+### PAM
+
+#### CLUSTER PLOT
+```{r}
+library(Rtsne)
+pam_fit <- pam(gower_dist, diss = TRUE, k = 4)
+
+tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
+tsne_data <- tsne_obj$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(pam_fit$clustering))
+ggplot(aes(x = X, y = Y), data = tsne_data) +
+  geom_point(aes(color = cluster))
+```
+
+#### CONTINGENCY TABLE
+
+```{r}
+pam_fit$clustering<- as.factor(pam_fit$clustering)
+tabl = prop.table(table(pam_fit$clustering,isCanceled_sample))*100
+tabl
+```
+
+```{r}
+tabl[1,2]/(tabl[1]+ tabl[1,2])*100 # % of Cancelations of Group 1
+tabl[2,2]/(tabl[2]+tabl[2,2])*100 # % of Cancelations of Group 2
+tabl[3,2]/(tabl[3]+tabl[3,2])*100 # % of Cancelations of Group 3
+tabl[4,2]/(tabl[4]+tabl[4,2])*100 # % of Cancelations of Group 4
+# tabl[5,2]/(tabl[5]+tabl[5,2])*100 # % of Cancelations of Group 5
+# tabl[6,2]/(tabl[6]+tabl[6,2])*100 # % of Cancelations of Group 6
+# tabl[7,2]/(tabl[7]+tabl[7,2])*100 # % of Cancelations of Group 7
+# tabl[8,2]/(tabl[8]+tabl[8,2])*100 # % of Cancelations of Group 8
+# tabl[9,2]/(tabl[9]+tabl[9,2])*100 # % of Cancelations of Group 9
+# tabl[10,2]/(tabl[10]+tabl[10,2])*100 # % of Cancelations of Group 10
+```
+#### SILHOUETTE PLOT
+```{r}
+fviz_silhouette(pam_fit)
+```
+
+### CLARA
+#### CLUSTER PLOT
+```{r}
+library(cluster)
+claraC2 = clara(numericVariables, 2,
+                    samples = 1000, correct.d = FALSE)
+fviz_cluster(claraC2, geom = "point", pointsize = 1, ellipse.type = "norm")
+```
+
+
+
+#### CONTINGENCY TABLE
+```{r}
+claraC2$clustering <- as.factor(claraC2$clustering)
+tabl = prop.table(table(claraC2$clustering,isCanceled_sample))*100
+tabl
+```
+
+```{r}
+tabl[1,2]/(tabl[1] + tabl[1,2])*100 # % of Cancelations of Group 1
+tabl[2,2]/(tabl[2] + tabl[2,2])*100 # % of Cancelations of Group 2
+```
+#### SILHOUETTE PLOT
+```{r}
+fviz_silhouette(claraC2)
+```
+
+### FUZZY ANALYSIS CLUSTERING
+#### CLUSTER PLOT
+```{r}
+library(Rtsne)
+fanny_fit <- fanny(gower_dist, diss = TRUE, k = 2)
+
+tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
+tsne_data <- tsne_obj$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(fanny_fit$clustering))
+ggplot(aes(x = X, y = Y), data = tsne_data) +
+  geom_point(aes(color = cluster))
+```
+```{r}
+# Coeficiente de segmentación normalizado:
+fanny_fit$coeff
+```
+#### CONTINGENCY TABLE
+```{r}
+fanny_fit$clustering <- as.factor(fanny_fit$clustering)
+tabl = prop.table(table(fanny_fit$clustering,isCanceled_sample))*100
+tabl
+```
+```{r}
+tabl[1,2]/(tabl[1]+ tabl[1,2])*100 # % of Cancelations of Group 1
+tabl[2,2]/(tabl[2]+tabl[2,2])*100 # % of Cancelations of Group 2
+```
+
+#### SILHOUETTE PLOT
+```{r}
+fviz_silhouette(fanny_fit)
+```
+# DIMENSIONALITY REDUCTION
+
+## CORRESPONDENCE ANALYSIS
+### RESERVED ROOM VS  DISTRIBUTION CHANNEL
+```{r}
+roomChannel = as.data.frame.matrix(table(raw_data$DistributionChannel, raw_data$ReservedRoomType))
+roomChannel
+
+as.table(as.matrix(roomChannel))
+```
+```{r}
+roomChannelScaled = scale(roomChannel)
+roomChannelScaled
+```
+
+#### Independence Test
+```{r}
+test.ind = chisq.test(roomChannel)
+test.ind
+
+# The result of the test confirms the possibility of rejecting the hypotheses of independence between categories of rows and columns, or, what is the same, we can affirm that there is a relationship between them. The rest of the tests presented below allow us to help visualize and interpret the test result.
+```
+
+
+
+
+#### Analysis
+```{r}
+roomChannelt = as.table(as.matrix(roomChannel))
+roomChannelt
+```
+```{r}
+library("FactoMineR")
+# tab1 <- as.data.frame.matrix(table(as.factor(df$X1),as.factor(df$X2)))
+# res.ca <- CA(tab1, graph = FALSE)
+```
+
+```{r}
+library(FactoMineR)
+roomChannel.ca=CA(roomChannel, graph = FALSE)
+```
+
+```{r}
+summary(roomChannel.ca)
+```
+
+```{r}
+fviz_ca_biplot(roomChannel.ca, map ="rowprincipal", arrow = c(TRUE, TRUE))
+```
+
+```{r}
+fviz_ca_biplot(roomChannel.ca, map ="colgreen",
+               arrow = c(TRUE, FALSE))+
+        ggtitle("Contribution of Distribution Channels to the dimensions")
+```
+
+```{r}
+fviz_ca_biplot(roomChannel.ca, map ="rowgreen",
+               arrow = c(FALSE, TRUE))+
+        ggtitle("Contribution of Room Types to the dimensions")
+```
+
+
+
+### COUNTRY  VS  RESERVED ROOM
+```{r}
+countryRoom = as.data.frame.matrix(table(raw_data$Country, raw_data$ReservedRoomType))
+countryRoom
+```
+#### Independence Test
+```{r}
+test.ind = chisq.test(countryRoom)
+test.ind
+
+# The result of the test confirms the possibility of rejecting the hypotheses of independence between categories of rows and columns, or, what is the same, we can affirm that there is a relationship between them. The rest of the tests presented below allow us to help visualize and interpret the test result.
+```
+
+
+#### Analysis
+
+```{r}
+library(FactoMineR)
+countryRoom.ca=CA(countryRoom, graph = FALSE)
+```
+
+
+```{r}
+summary(countryRoom.ca)
+```
+```{r}
+fviz_ca_biplot(countryRoom.ca, map ="rowprincipal", arrow = c(TRUE, TRUE))
+```
+```{r}
+fviz_ca_biplot(countryRoom.ca, map ="colgreen",
+               arrow = c(TRUE, FALSE))+
+        ggtitle("Contribution of Country to the dimensions")
+```
+```{r}
+fviz_ca_biplot(countryRoom.ca, map ="rowgreen",
+               arrow = c(FALSE, TRUE))+
+        ggtitle("Contribution of Room Type to the dimensions")
+```
